@@ -10,7 +10,6 @@ const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
 const Tweener = imports.ui.tweener;
-//const Util = imports.misc.util;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
@@ -98,7 +97,6 @@ Note.prototype = {
             
             this.buildMenu();
             
-//this.test();
         } catch(e) {
             global.logError(e);
         }
@@ -115,6 +113,14 @@ Note.prototype = {
         remove.connect("activate", Lang.bind(this, function() {
             this.emit("destroy", this);
         }));
+        
+        let copy = new PopupMenu.PopupMenuItem("Copy");
+        this.menu.addMenuItem(copy);
+        copy.connect("activate", Lang.bind(this, this.copy));
+        
+        let paste = new PopupMenu.PopupMenuItem("Paste");
+        this.menu.addMenuItem(paste);
+        paste.connect("activate", Lang.bind(this, this.paste));
     },
     
     _onDragBegin: function() {
@@ -142,7 +148,6 @@ Note.prototype = {
     },
     
     onButtonRelease: function(actor, event) {
-global.log("released");
         if ( event.get_button() == 3 ) return true;
         else {
             this.menu.close();
@@ -184,7 +189,6 @@ global.log("released");
     },
     
     trackMouse: function() {
-//global.log("tracking");
         if( !Main.layoutManager.isTrackingChrome(this.actor) ) {
             Main.layoutManager.addChrome(this.actor, { doNotAdd: true });
             this._isTracked = true;
@@ -220,6 +224,24 @@ global.log("released");
     
     getInfo: function() {
         return { text: this.text.text, x: this.actor.x, y: this.actor.y };
+    },
+    
+    copy: function() {
+        let cursor = this.text.clutter_text.get_cursor_position();
+        let selection = this.text.clutter_text.get_selection_bound();
+        let text;
+        if ( cursor == selection ) text = this.text.clutter_text.get_text();
+        else text = this.text.clutter_text.get_selection();
+        St.Clipboard.get_default().set_text(text);
+    },
+    
+    paste: function() {
+        St.Clipboard.get_default().get_text(Lang.bind(this, function(cb, text) {
+            let cursor = this.text.clutter_text.get_cursor_position();
+            let selection = this.text.clutter_text.get_selection_bound();
+            if ( cursor != selection ) this.text.clutter_text.delete_selection();
+            this.text.clutter_text.insert_text(text, this.text.clutter_text.get_cursor_position());
+        }));
     }
 }
 Signals.addSignalMethods(Note.prototype);
@@ -280,6 +302,7 @@ NoteBox.prototype = {
     newNote: function() {
         this.addNote(null);
         this.update();
+        this.raiseNotes();
     },
     
     removeNote: function(note) {
@@ -478,12 +501,6 @@ NoteBox.prototype = {
         let enable = !(window && window.window_type != Meta.WindowType.DESKTOP) || notesRaised;
         if( this.mouseTrackEnabled != enable ) {
             this.mouseTrackEnabled = enable;
-try {
-if (!this.notes) throw new Error("hello");
-    
-} catch(e) {
-    global.logError(e);
-}
             if( enable ) {
                 for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].trackMouse();
             }
@@ -491,12 +508,11 @@ if (!this.notes) throw new Error("hello");
                 for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].untrackMouse();
             }
         }
-//global.log("checking");
     },
     
     enableMouseTracking: function(enable) {
         if( enable && !this.mouseTrackTimoutId )
-            this.mouseTrackTimoutId = Mainloop.timeout_add(50000, this.checkMouseTracking);
+            this.mouseTrackTimoutId = Mainloop.timeout_add(500, Lang.bind(this, this.checkMouseTracking));
         else if ( !enable && this.mouseTrackTimoutId ) {
             Mainloop.source_remove(this.mouseTrackTimoutId);
             for ( let i = 0; i < this.notes.length; i++ ) {
