@@ -297,12 +297,15 @@ NoteBox.prototype = {
         note.draggable.connect("drag-end", Lang.bind(note, note._onDragEnd));
         note.draggable.connect("drag-cancelled", Lang.bind(note, note._onDragEnd));
         this.checkMouseTracking();
+        
+        return note;
     },
     
     newNote: function() {
-        this.addNote(null);
+        let note = this.addNote(null);
         this.update();
         this.raiseNotes();
+        note.focusText();
     },
     
     removeNote: function(note) {
@@ -391,7 +394,10 @@ NoteBox.prototype = {
             
             let target = event.get_source();
             for ( let i = 0; i < this.notes.length; i++ ) {
-                if ( this.notes[i].actor == target || this.notes[i].menu.actor == target ) return false;
+                if ( this.notes[i].actor == target ||
+                     this.notes[i].actor.contains(target) ||
+                     this.notes[i].menu.actor == target ||
+                     this.notes[i].menu.actor.contains(target) ) return false;
             }
             
             let type = event.type();
@@ -611,7 +617,7 @@ MyApplet.prototype = {
         //add space to ui group
         let uiGroup = Main.uiGroup;
         
-        topBox = new St.Bin({ x_expand: true, x_fill: true, y_expand: true, y_fill: true, height: 200, width: 200 });
+        topBox = new St.Bin({ x_expand: true, x_fill: true, y_expand: true, y_fill: true });
         uiGroup.add_actor(topBox);
         
         bottomBox = new St.Bin({ x_expand: true, x_fill: true, y_expand: true, y_fill: true });
