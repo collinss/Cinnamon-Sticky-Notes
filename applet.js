@@ -529,7 +529,7 @@ NoteBox.prototype = {
         if ( Main.desktop_layout != Main.LAYOUT_TRADITIONAL ) startY += Main.panel.actor.height;
         let width = monitor.width - PADDING;
         let height = monitor.height - Main.panel.actor.height - PADDING;
-        if ( Main.desktop_layout != Main.LAYOUT_CLASSIC ) height -= Main.panel2.actor.height;
+        if ( Main.desktop_layout == Main.LAYOUT_CLASSIC ) height -= Main.panel2.actor.height;
         
         //calculate number of squares
         let rowHeight = START_HEIGHT + PADDING;
