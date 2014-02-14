@@ -316,7 +316,7 @@ NoteBox.prototype = {
         let note = this.addNote(null);
         this.update();
         this.raiseNotes();
-        note.focusText();
+        Mainloop.idle_add(Lang.bind(note, note.focusText));
     },
     
     removeNote: function(note) {
