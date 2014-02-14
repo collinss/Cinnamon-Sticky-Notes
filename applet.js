@@ -65,21 +65,23 @@ Note.prototype = {
             this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: settings.theme + "-noteBox", height: START_HEIGHT, width: START_WIDTH });
             this.actor._delegate = this;
             
-            this.text = new St.Entry({  });
-            this.actor.add_actor(this.text);
-            if ( info ) this.text.text = info.text;
-            this.text.clutter_text.set_single_line_mode(false);
-            this.text.clutter_text.set_activatable(false);
-            this.text.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
-            this.text.clutter_text.line_wrap = true;
-            this.text.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
-            this.text.clutter_text.set_selectable(true);
+            this.textBox = new St.Entry({  });
+            this.actor.add_actor(this.textBox);
+            if ( info ) this.textBox.text = info.text;
             
-            this.text.connect("enter-event", Lang.bind(this, function() { this.draggable.inhibit = true }));
-            this.text.connect("leave-event", Lang.bind(this, function() { this.draggable.inhibit = false }));
-            this.text.clutter_text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
-            this.text.clutter_text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-            this.text.clutter_text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
+            this.text = this.textBox.clutter_text;
+            this.text.set_single_line_mode(false);
+            this.text.set_activatable(false);
+            this.text.ellipsize = Pango.EllipsizeMode.NONE;
+            this.text.line_wrap = true;
+            this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+            this.text.set_selectable(true);
+            
+            this.textBox.connect("enter-event", Lang.bind(this, function() { this.draggable.inhibit = true }));
+            this.textBox.connect("leave-event", Lang.bind(this, function() { this.draggable.inhibit = false }));
+            this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+            this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+            this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
             this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             settings.connect("theme-changed", Lang.bind(this, function() {
@@ -150,12 +152,18 @@ Note.prototype = {
     onButtonRelease: function(actor, event) {
         if ( event.get_button() == 3 ) return true;
         else {
-            this.menu.close();
-            this.focusText();
+            if ( this.menu.isOpen ) this.menu.close();
+            else {
+                if ( event.get_source() == this.text ) {
+                    if ( !notesRaised ) this.focusText();
+                }
+                else {
+                    this.focusText();
+                    this.text.cursor_position = this.text.selection_bound = this.text.text.length;
+                }
+            }
         }
-        //if ( !this.menu.isOpen ) this.focusText();
         
-        //if ( event.get_button() == 3 && !this.menu.isOpen ) return true;
         return false;
     },
     
@@ -204,43 +212,46 @@ Note.prototype = {
     
     focusText: function() {
         let currentMode = global.stage_input_mode;
-        if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.text.has_key_focus() ) return;
+        if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.textBox.has_key_focus() ) return;
         this.previousMode = currentMode;
         if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
             global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
         }
         
-        this.text.grab_key_focus();
+        this.textBox.grab_key_focus();
         if ( notesRaised ) global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
         if ( !this.unfocusId ) this.unfocusId = this.text.connect("key-focus-out", Lang.bind(this, this.unfocusText));
     },
     
     unfocusText: function() {
-        if ( this.unfocusId ) this.text.disconnect(this.unfocusId);
+        if ( this.unfocusId ) {
+            this.text.disconnect(this.unfocusId);
+            this.unfocusId = -1;
+        }
         if ( this.previousMode ) global.set_stage_input_mode(this.previousMode);
         else global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
         this.previousMode = null;
     },
     
     getInfo: function() {
-        return { text: this.text.text, x: this.actor.x, y: this.actor.y };
+        return { text: this.textBox.text, x: this.actor.x, y: this.actor.y };
     },
     
     copy: function() {
-        let cursor = this.text.clutter_text.get_cursor_position();
-        let selection = this.text.clutter_text.get_selection_bound();
+        let cursor = this.text.get_cursor_position();
+        let selection = this.text.get_selection_bound();
         let text;
-        if ( cursor == selection ) text = this.text.clutter_text.get_text();
-        else text = this.text.clutter_text.get_selection();
+        if ( cursor == selection ) text = this.text.get_text();
+        else text = this.text.get_selection();
         St.Clipboard.get_default().set_text(text);
     },
     
     paste: function() {
         St.Clipboard.get_default().get_text(Lang.bind(this, function(cb, text) {
-            let cursor = this.text.clutter_text.get_cursor_position();
-            let selection = this.text.clutter_text.get_selection_bound();
-            if ( cursor != selection ) this.text.clutter_text.delete_selection();
-            this.text.clutter_text.insert_text(text, this.text.clutter_text.get_cursor_position());
+            let cursor = this.text.get_cursor_position();
+            let selection = this.text.get_selection_bound();
+            if ( cursor != selection ) this.text.delete_selection();
+            this.text.insert_text(text, this.text.get_cursor_position());
         }));
     }
 }
