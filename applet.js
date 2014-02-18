@@ -226,6 +226,7 @@ Note.prototype = {
         this.textBox.grab_key_focus();
         if ( notesRaised ) global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
         if ( !this.unfocusId ) this.unfocusId = this.text.connect("key-focus-out", Lang.bind(this, this.unfocusText));
+        this.actor.add_style_pseudo_class("focus");
     },
     
     unfocusText: function() {
@@ -236,6 +237,7 @@ Note.prototype = {
         if ( this.previousMode ) global.set_stage_input_mode(this.previousMode);
         else global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
         this.previousMode = null;
+        this.actor.remove_style_pseudo_class("focus");
     },
     
     getInfo: function() {

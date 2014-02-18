@@ -9,3 +9,8 @@
     padding: 7px;
     /*color: #FC64FC;*/
 }
+
+.yellow-noteBox:focus {
+    color: blue;
+    background-color: red;
+}
