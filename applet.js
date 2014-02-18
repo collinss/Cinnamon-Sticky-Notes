@@ -1,5 +1,7 @@
 const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Meta = imports.gi.Meta;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
@@ -37,7 +39,10 @@ SettingsManager.prototype = {
             
             this.settings = new Settings.AppletSettings(this, uuid, instanceId);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "storedNotes", "storedNotes");
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "collapsed", "collapsed", function() { this.emit("collapsed-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme", function() { this.emit("theme-changed"); });
+            this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
             
         } catch(e) {
             global.logError(e);
@@ -267,10 +272,14 @@ NoteBox.prototype = {
         this.notes = [];
         this.last_x = -1;
         this.last_y = -1;
-        this.mouseTrackEnabled = false;
+        this.mouseTrackEnabled = -1;
         
         this.actor = new Clutter.Group();
         this.actor._delegate = this;
+        if ( settings.startState == 1 || ( settings.startState == 2 && settings.hideState ) ) {
+            this.actor.hide();
+            settings.hideState = true;
+        }
         
         this.dragPlaceholder = new St.Bin({ style_class: "desklet-drag-placeholder" });
         this.dragPlaceholder.hide();
@@ -358,7 +367,10 @@ NoteBox.prototype = {
         try {
             if ( notesRaised ) return;
             global.reparentActor(this.actor, topBox);
-            this.actor.show();
+            if ( settings.hideState ) {
+                this.actor.show();
+                settings.hideState = false;
+            }
             Main.pushModal(this.actor);
             if ( !this.stageEventIds ) {
                 this.stageEventIds = [];
@@ -368,6 +380,7 @@ NoteBox.prototype = {
             }
             
             notesRaised = true;
+            this.emit("state-changed");
         } catch(e) {
             global.logError(e);
         }
@@ -376,13 +389,17 @@ NoteBox.prototype = {
     lowerNotes: function() {
         try {
             global.reparentActor(this.actor, bottomBox);
-            this.actor.show();
+            if ( settings.hideState ) {
+                this.actor.show();
+                settings.hideState = false;
+            }
             if ( this.stageEventIds ) {
                 for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
                 this.stageEventIds = null;
             }
             if ( notesRaised ) Main.popModal(this.actor);
             notesRaised = false;
+            this.emit("state-changed");
         } catch(e) {
             global.logError(e);
         }
@@ -390,11 +407,14 @@ NoteBox.prototype = {
     
     hideNotes: function() {
         try {
+            if ( settings.hideState ) return;
             this.actor.hide();
+            settings.hideState = true;
             if ( this.stageEventIds ) {
                 for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
                 this.stageEventIds = null;
             }
+            this.emit("state-changed");
         } catch(e) {
             global.logError(e);
         }
@@ -484,7 +504,7 @@ NoteBox.prototype = {
         
         Main.uiGroup.remove_actor(actor);
         this.actor.add_actor(actor);
-        mouseTrackEnabled = -1; // forces an update of all mouse tracks
+        mouseTrackEnabled = false;
         this.checkMouseTracking();
         
         this.update();
@@ -581,6 +601,7 @@ NoteBox.prototype = {
         return [startX, startY];
     }
 }
+Signals.addSignalMethods(NoteBox.prototype);
 
 
 function MyApplet(metadata, orientation, panelHeight, instanceId) {
@@ -588,7 +609,7 @@ function MyApplet(metadata, orientation, panelHeight, instanceId) {
 }
 
 MyApplet.prototype = {
-    __proto__: Applet.TextIconApplet.prototype,
+    __proto__: Applet.Applet.prototype,
     
     _init: function(metadata, orientation, panelHeight, instanceId) {
         try {
@@ -597,25 +618,23 @@ MyApplet.prototype = {
             this.instanceId = instanceId;
             this.orientation = orientation;
             
-            Applet.TextIconApplet.prototype._init.call(this, this.orientation, panelHeight);
+            Applet.Applet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
+            
+            this.contextToggleCollapse = this._applet_context_menu.addAction("Collapse", Lang.bind(this, function() {
+                settings.collapsed = !settings.collapsed;
+                this.buildPanel();
+            }));
             
             this.menuManager = new PopupMenu.PopupMenuManager(this);
-            this.menu = new Applet.AppletPopupMenu(this, this.orientation);
-            this.menuManager.addMenu(this.menu);
             
             this.addNoteContainers();
+            this.buildPanel();
             
-            this.set_applet_icon_path(this.metadata.path+"/sticky.svg");
-            
-            this.buildMenu();
+            settings.connect("collapsed-changed", Lang.bind(this, this.buildPanel));
             
         } catch(e) {
             global.logError(e);
         }
-    },
-    
-    on_applet_clicked: function(event) {
-        this.menu.toggle();
     },
     
     on_applet_removed_from_panel: function() {
@@ -636,21 +655,107 @@ MyApplet.prototype = {
         uiGroup.lower_child(bottomBox, global.window_group);
         
         this.noteBox = new NoteBox();
+        this.noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
     },
     
-    buildMenu: function() {
+    buildPanel: function() {
+        if ( this.buttonBox ) this.buttonBox.get_parent().remove_actor(this.buttonBox);
+        else this.buildButtons();
+        this.actor.destroy_all_children();
+        if ( this.menu ) {
+            this.menu.destroy();
+            this.menu = null;
+        }
         
-        let newNote = new PopupMenu.PopupMenuItem("New");
-        this.menu.addMenuItem(newNote);
-        newNote.connect("activate", Lang.bind(this.noteBox, this.noteBox.newNote));
+        let buttonBin;
+        if ( settings.collapsed ) {
+            this.actor.set_track_hover(true);
+            let file = Gio.file_new_for_path(this.metadata.path+"/sticky.svg");
+            let gicon = new Gio.FileIcon({ file: file });
+            let appletIcon;
+            if (this._scaleMode) {
+                appletIcon = new St.Icon({ gicon: gicon,
+                                           icon_size: this._panelHeight * .875,
+                                           icon_type: St.IconType.FULLCOLOR,
+                                           reactive: true,
+                                           track_hover: true,
+                                           style_class: "applet-icon" });
+            }
+            else {
+                appletIcon = new St.Icon({ gicon: gicon,
+                                           icon_size: 22,
+                                           icon_type: St.IconType.FULLCOLOR,
+                                           reactive: true,
+                                           track_hover: true,
+                                           style_class: "applet-icon" });
+            }
+            this.actor.add_actor(appletIcon);
+            
+            this.menu = new Applet.AppletPopupMenu(this, this.orientation);
+            this.menuManager.addMenu(this.menu);
+            buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
+            this.menu.addActor(buttonBin);
+            
+            appletIcon.connect("button-press-event", Lang.bind(this, function() { this.menu.toggle(); }));
+            
+            this.contextToggleCollapse.label.text = "Expand";
+        }
+        else {
+            this.actor.set_track_hover(false);
+            buttonBin = new St.Bin({ style_class: "sticky-panelBox" });
+            this.actor.add_actor(buttonBin);
+            
+            this.contextToggleCollapse.label.text = "Collapse";
+        }
         
-        let raiseNotes = new PopupMenu.PopupMenuItem("Raise");
-        this.menu.addMenuItem(raiseNotes);
-        raiseNotes.connect("activate", Lang.bind(this.noteBox, this.noteBox.raiseNotes));
+        buttonBin.set_child(this.buttonBox);
+    },
+    
+    buildButtons: function() {
+        this.buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
         
-        let lowerNotes = new PopupMenu.PopupMenuItem("Lower");
-        this.menu.addMenuItem(lowerNotes);
-        lowerNotes.connect("activate", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.newNote = new St.Button({ label: "New" });
+        this.buttonBox.add_actor(this.newNote);
+        this.newNote.connect("clicked", Lang.bind(this.noteBox, this.noteBox.newNote));
+        
+        this.raiseNotes = new St.Button({ label: "Raise" });
+        this.buttonBox.add_actor(this.raiseNotes);
+        this.raiseNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.raiseNotes));
+        
+        this.lowerNotes = new St.Button({ label: "Lower" });
+        this.buttonBox.add_actor(this.lowerNotes);
+        this.lowerNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        
+        this.showNotes = new St.Button({ label: "Show" });
+        this.buttonBox.add_actor(this.showNotes);
+        this.showNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        
+        this.hideNotes = new St.Button({ label: "Hide" });
+        this.buttonBox.add_actor(this.hideNotes);
+        this.hideNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.hideNotes));
+        
+        this.setVisibleButtons();
+    },
+    
+    setVisibleButtons: function() {
+        if ( notesRaised ) {
+            this.showNotes.hide();
+            this.hideNotes.show();
+            this.raiseNotes.hide();
+            this.lowerNotes.show();
+        }
+        else if ( settings.hideState ) {
+            this.showNotes.show();
+            this.hideNotes.hide();
+            this.raiseNotes.show();
+            this.lowerNotes.hide();
+        }
+        else {
+            this.showNotes.hide();
+            this.hideNotes.show();
+            this.raiseNotes.show();
+            this.lowerNotes.hide();
+        }
     }
 }
 

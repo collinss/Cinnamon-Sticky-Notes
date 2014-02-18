@@ -4,6 +4,28 @@
         "default": []
     },
     
+    "hideState": {
+        "type": "generic",
+        "default": false
+    },
+    
+    "collapsed": {
+        "type": "checkbox",
+        "description": "Collapsed",
+        "default": "false"
+    },
+    
+    "startState": {
+        "type": "combobox",
+        "description": "When Cinnamon starts",
+        "default": 0,
+        "options": {
+            "Show notes on Desktop": 0,
+            "Hide notes": 1,
+            "Restore previous state": 2
+        }
+    },
+    
     "theme": {
         "type": "combobox",
         "description": "Theme",
