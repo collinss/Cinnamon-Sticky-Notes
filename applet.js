@@ -2,6 +2,7 @@ const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const Gtk = imports.gi.Gtk;
 const Meta = imports.gi.Meta;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
@@ -70,8 +71,15 @@ Note.prototype = {
             this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: settings.theme + "-noteBox", height: START_HEIGHT, width: START_WIDTH });
             this.actor._delegate = this;
             
+            this.scrollBox = new St.ScrollView({ style_class: settings.theme + "-scrollBox" });
+            this.actor.add_actor(this.scrollBox);
+            this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+            
+            this.textContainer = new St.BoxLayout();
+            this.scrollBox.add_actor(this.textContainer);
+            
             this.textBox = new St.Entry({  });
-            this.actor.add_actor(this.textBox);
+            this.textContainer.add_actor(this.textBox);
             if ( info ) this.textBox.text = info.text;
             
             this.text = this.textBox.clutter_text;
@@ -87,6 +95,7 @@ Note.prototype = {
             this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
+            this.text.connect("cursor-event", Lang.bind(this, this.handleScrollPosition));
             this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             settings.connect("theme-changed", Lang.bind(this, function() {
@@ -199,6 +208,27 @@ Note.prototype = {
         }
         
         return false;
+    },
+    
+    handleScrollPosition: function(text, geometry) {
+        let textHeight = this.textBox.height;
+        let scrollHeight = this.scrollBox.height;
+        
+        if ( textHeight <= scrollHeight ) return;
+        
+        let adjustment = this.textContainer.vadjustment;
+        let cursorY = geometry.y;
+        let startY = adjustment.value;
+        let endY = scrollHeight + startY;
+        
+        if ( cursorY < startY + geometry.height*2 ) {
+            let desiredPosition = cursorY - geometry.height*2;
+            adjustment.set_value(( desiredPosition > 0 ? desiredPosition : 0 ));
+        }
+        else if ( cursorY > endY - geometry.height*3 ) {
+            let desiredPosition = cursorY + geometry.height*3;
+            adjustment.set_value(( desiredPosition < textHeight ? desiredPosition : textHeight ) - scrollHeight);
+        }
     },
     
     trackMouse: function() {

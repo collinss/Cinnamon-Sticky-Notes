@@ -14,3 +14,12 @@
     color: blue;
     background-color: red;
 }
+
+.yellow-scrollBox StBin#trough {
+    background-color: #C9C900;
+}
+
+.yellow-scrollBox StButton#vhandle {
+    background-color: #E5E500;
+    border-radius: 0px;
+}

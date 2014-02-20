@@ -7,7 +7,6 @@ Known Issues
 Before Release
 --------------
     Create themes
-    Add focused pseudoclass
     Add icons
 
 Adressed
@@ -17,3 +16,5 @@ Adressed
     Add collapse to context menu
     Adjust buttons to reflect state
     Set default start state in settings
+    Add focused pseudoclass
+    Add scrollbox
