@@ -1,7 +1,5 @@
 Known Issues
 ------------
-    Weird behavior in raised mode on empty desktop
-    Focus issue after dnd in raised mode
 
 Before Release
 --------------
@@ -18,3 +16,5 @@ Adressed
     Add focused pseudoclass
     Add scrollbox
     Text focus event bug (evidenced by focus pseudoclass)
+    Changed raised mode behavior
+    Weird dnd behavior

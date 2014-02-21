@@ -90,12 +90,12 @@ Note.prototype = {
             this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
             this.text.set_selectable(true);
             
-            this.textBox.connect("enter-event", Lang.bind(this, function() { this.draggable.inhibit = true }));
-            this.textBox.connect("leave-event", Lang.bind(this, function() { this.draggable.inhibit = false }));
+            this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
             this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
             this.text.connect("cursor-event", Lang.bind(this, this.handleScrollPosition));
+            this.text.connect("key-focus-in", Lang.bind(this, this.onTextFocused));
             this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             settings.connect("theme-changed", Lang.bind(this, function() {
@@ -144,8 +144,14 @@ Note.prototype = {
     },
     
     _onDragEnd: function() {
+        this.updateDnD();
         global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
         this.trackMouse();
+    },
+    
+    updateDnD: function() {
+        if ( this.text.has_pointer ) this.draggable.inhibit = true;
+        else this.draggable.inhibit = false;
     },
     
     destroy: function(){
@@ -165,17 +171,20 @@ Note.prototype = {
     
     onButtonRelease: function(actor, event) {
         if ( event.get_button() == 3 ) return true;
+        
+        if ( this.pointerGrabbed ) {
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+            Clutter.ungrab_pointer();
+            this.pointerGrabbed = false;
+            return false;
+        }
+        
+        if ( event.get_source() == this.text ) {
+            if ( !notesRaised ) this.focusText();
+        }
         else {
-            if ( this.menu.isOpen ) this.menu.close();
-            else {
-                if ( event.get_source() == this.text ) {
-                    if ( !notesRaised ) this.focusText();
-                }
-                else {
-                    this.focusText();
-                    this.text.cursor_position = this.text.selection_bound = this.text.text.length;
-                }
-            }
+            this.focusText();
+            this.text.cursor_position = this.text.selection_bound = this.text.text.length;
         }
         
         return false;
@@ -205,6 +214,14 @@ Note.prototype = {
             else this.menu.setArrowSide(St.Side.LEFT);
             
             return true;
+        }
+        
+        if ( this.menu.isOpen ) this.menu.close();
+        
+        if ( actor == this.text ) {
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
+            Clutter.grab_pointer(this.text);
+            this.pointerGrabbed = true;
         }
         
         return false;
@@ -245,6 +262,11 @@ Note.prototype = {
         }
     },
     
+    onTextFocused: function() {
+        if ( !this.unfocusId ) this.unfocusId = this.text.connect("key-focus-out", Lang.bind(this, this.unfocusText));
+        this.actor.add_style_pseudo_class("focus");
+    },
+    
     focusText: function() {
         let currentMode = global.stage_input_mode;
         if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.textBox.has_key_focus() ) return;
@@ -254,9 +276,6 @@ Note.prototype = {
         }
         
         this.textBox.grab_key_focus();
-        if ( notesRaised ) global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
-        if ( !this.unfocusId ) this.unfocusId = this.text.connect("key-focus-out", Lang.bind(this, this.unfocusText));
-        this.actor.add_style_pseudo_class("focus");
     },
     
     unfocusText: function() {
@@ -264,8 +283,10 @@ Note.prototype = {
             this.text.disconnect(this.unfocusId);
             this.unfocusId = null;
         }
-        if ( this.previousMode ) global.set_stage_input_mode(this.previousMode);
-        else global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
+        if ( global.stage_input_mode == Cinnamon.StageInputMode.FOCUSED ) {
+            if ( this.previousMode ) global.set_stage_input_mode(this.previousMode);
+            else global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
+        }
         this.previousMode = null;
         this.actor.remove_style_pseudo_class("focus");
     },
@@ -403,15 +424,10 @@ NoteBox.prototype = {
                 this.actor.show();
                 settings.hideState = false;
             }
-            Main.pushModal(this.actor);
-            if ( !this.stageEventIds ) {
-                this.stageEventIds = [];
-                this.stageEventIds.push(global.stage.connect("captured-event", Lang.bind(this, this.handleStageEvent)));
-                this.stageEventIds.push(global.stage.connect("enter-event", Lang.bind(this, this.handleStageEvent)));
-                this.stageEventIds.push(global.stage.connect("leave-event", Lang.bind(this, this.handleStageEvent)));
-            }
             
             notesRaised = true;
+            this.checkMouseTracking();
+            
             this.emit("state-changed");
         } catch(e) {
             global.logError(e);
@@ -425,12 +441,10 @@ NoteBox.prototype = {
                 this.actor.show();
                 settings.hideState = false;
             }
-            if ( this.stageEventIds ) {
-                for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
-                this.stageEventIds = null;
-            }
-            if ( notesRaised ) Main.popModal(this.actor);
+            
             notesRaised = false;
+            this.checkMouseTracking();
+            
             this.emit("state-changed");
         } catch(e) {
             global.logError(e);
@@ -450,30 +464,6 @@ NoteBox.prototype = {
         } catch(e) {
             global.logError(e);
         }
-    },
-    
-    handleStageEvent: function(actor, event) {
-        try {
-            
-            let target = event.get_source();
-            for ( let i = 0; i < this.notes.length; i++ ) {
-                if ( this.notes[i].actor == target ||
-                     this.notes[i].actor.contains(target) ||
-                     this.notes[i].menu.actor == target ||
-                     this.notes[i].menu.actor.contains(target) ) return false;
-            }
-            
-            let type = event.type();
-            if ( type == Clutter.EventType.BUTTON_PRESS ) return true;
-            if ( type == Clutter.EventType.BUTTON_RELEASE ) {
-                this.lowerNotes();
-                return true;
-            }
-            
-        } catch(e) {
-            global.logError(e);
-        }
-        return false;
     },
     
     handleDragOver: function(source, actor, x, y, time) {
