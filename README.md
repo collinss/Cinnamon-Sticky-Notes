@@ -2,7 +2,6 @@ Known Issues
 ------------
     Weird behavior in raised mode on empty desktop
     Focus issue after dnd in raised mode
-    Text focus event bug (evidenced by focus pseudoclass)
 
 Before Release
 --------------
@@ -18,3 +17,4 @@ Adressed
     Set default start state in settings
     Add focused pseudoclass
     Add scrollbox
+    Text focus event bug (evidenced by focus pseudoclass)

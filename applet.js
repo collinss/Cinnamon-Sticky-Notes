@@ -262,7 +262,7 @@ Note.prototype = {
     unfocusText: function() {
         if ( this.unfocusId ) {
             this.text.disconnect(this.unfocusId);
-            this.unfocusId = -1;
+            this.unfocusId = null;
         }
         if ( this.previousMode ) global.set_stage_input_mode(this.previousMode);
         else global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
