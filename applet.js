@@ -12,7 +12,9 @@ const DND = imports.ui.dnd;
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
+const Tooltips = imports.ui.tooltips;
 const Tweener = imports.ui.tweener;
+
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
@@ -55,6 +57,32 @@ SettingsManager.prototype = {
     }
 }
 Signals.addSignalMethods(SettingsManager.prototype);
+
+
+function PanelButton(iconPath, tooltipText, command) {
+    this._init(iconPath, tooltipText, command);
+}
+
+PanelButton.prototype = {
+    _init: function(iconPath, tooltipText, command) {
+        this.command = command;
+        
+        this.actor = new St.Button({ style_class: "sticky-panelButton" });
+        
+        let file = Gio.file_new_for_path(iconPath);
+        let gicon = new Gio.FileIcon({ file: file });
+        let icon = new St.Icon({ gicon: gicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        this.actor.add_actor(icon);
+        
+        this.actor.connect("clicked", Lang.bind(this, this.activate));
+        
+        let tooltip = new Tooltips.Tooltip(this.actor, tooltipText)
+    },
+    
+    activate: function() {
+        this.command();
+    }
+}
 
 
 function Note(info) {
@@ -333,6 +361,7 @@ NoteBox.prototype = {
             this.actor.hide();
             settings.hideState = true;
         }
+        else if ( settings.startState == 0 ) settings.hideState = false;
         
         this.dragPlaceholder = new St.Bin({ style_class: "desklet-drag-placeholder" });
         this.dragPlaceholder.hide();
@@ -736,47 +765,75 @@ MyApplet.prototype = {
     buildButtons: function() {
         this.buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
         
-        this.newNote = new St.Button({ label: "New" });
-        this.buttonBox.add_actor(this.newNote);
-        this.newNote.connect("clicked", Lang.bind(this.noteBox, this.noteBox.newNote));
+        this.newNote = new PanelButton(this.metadata.path+"/add-symbolic.svg",
+                                       "New",
+                                       Lang.bind(this.noteBox, this.noteBox.newNote));
+        this.buttonBox.add_actor(this.newNote.actor);
         
-        this.raiseNotes = new St.Button({ label: "Raise" });
-        this.buttonBox.add_actor(this.raiseNotes);
-        this.raiseNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.raiseNotes));
+        this.raiseNotes = new PanelButton(this.metadata.path+"/raise-symbolic.svg",
+                                       "Raise",
+                                       Lang.bind(this.noteBox, this.noteBox.raiseNotes));
+        this.buttonBox.add_actor(this.raiseNotes.actor);
         
-        this.lowerNotes = new St.Button({ label: "Lower" });
-        this.buttonBox.add_actor(this.lowerNotes);
-        this.lowerNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.lowerNotes = new PanelButton(this.metadata.path+"/lower-symbolic.svg",
+                                       "Lower",
+                                       Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.buttonBox.add_actor(this.lowerNotes.actor);
         
-        this.showNotes = new St.Button({ label: "Show" });
-        this.buttonBox.add_actor(this.showNotes);
-        this.showNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.showNotes = new PanelButton(this.metadata.path+"/show-symbolic.svg",
+                                       "Show",
+                                       Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.buttonBox.add_actor(this.showNotes.actor);
         
-        this.hideNotes = new St.Button({ label: "Hide" });
-        this.buttonBox.add_actor(this.hideNotes);
-        this.hideNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.hideNotes));
+        this.hideNotes = new PanelButton(this.metadata.path+"/hide-symbolic.svg",
+                                       "Hide",
+                                       Lang.bind(this.noteBox, this.noteBox.hideNotes));
+        this.buttonBox.add_actor(this.hideNotes.actor);
+        
+        
+        
+        
+        //this.newNote = new St.Button({ label: "New" });
+        //this.buttonBox.add_actor(this.newNote);
+        //this.newNote.connect("clicked", Lang.bind(this.noteBox, this.noteBox.newNote));
+        //
+        //this.raiseNotes = new St.Button({ label: "Raise" });
+        //this.buttonBox.add_actor(this.raiseNotes);
+        //this.raiseNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.raiseNotes));
+        //
+        //this.lowerNotes = new St.Button({ label: "Lower" });
+        //this.buttonBox.add_actor(this.lowerNotes);
+        //this.lowerNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        //
+        //this.showNotes = new St.Button({ label: "Show" });
+        //this.buttonBox.add_actor(this.showNotes);
+        //this.showNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        //
+        //this.hideNotes = new St.Button({ label: "Hide" });
+        //this.buttonBox.add_actor(this.hideNotes);
+        //this.hideNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.hideNotes));
         
         this.setVisibleButtons();
     },
     
     setVisibleButtons: function() {
         if ( notesRaised ) {
-            this.showNotes.hide();
-            this.hideNotes.show();
-            this.raiseNotes.hide();
-            this.lowerNotes.show();
+            this.showNotes.actor.hide();
+            this.hideNotes.actor.show();
+            this.raiseNotes.actor.hide();
+            this.lowerNotes.actor.show();
         }
         else if ( settings.hideState ) {
-            this.showNotes.show();
-            this.hideNotes.hide();
-            this.raiseNotes.show();
-            this.lowerNotes.hide();
+            this.showNotes.actor.show();
+            this.hideNotes.actor.hide();
+            this.raiseNotes.actor.show();
+            this.lowerNotes.actor.hide();
         }
         else {
-            this.showNotes.hide();
-            this.hideNotes.show();
-            this.raiseNotes.show();
-            this.lowerNotes.hide();
+            this.showNotes.actor.hide();
+            this.hideNotes.actor.show();
+            this.raiseNotes.actor.show();
+            this.lowerNotes.actor.hide();
         }
     }
 }

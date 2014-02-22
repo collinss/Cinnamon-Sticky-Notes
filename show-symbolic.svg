@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg7384"
+   height="16"
+   width="16"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="hide-symbolic.svg">
+  <defs
+     id="defs10" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1022"
+     inkscape:window-height="622"
+     id="namedview8"
+     showgrid="false"
+     inkscape:zoom="14.75"
+     inkscape:cx="-2.1694919"
+     inkscape:cy="5.1256096"
+     inkscape:window-x="0"
+     inkscape:window-y="76"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg7384" />
+  <metadata
+     id="metadata90">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Gnome Symbolic Icon Theme</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <title
+     id="title9167">Gnome Symbolic Icon Theme</title>
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982"
+     width="2"
+     height="6"
+     x="7"
+     y="0"
+     ry="1"
+     rx="1" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-2"
+     width="2"
+     height="6"
+     x="7"
+     y="10"
+     ry="1"
+     rx="1" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-9"
+     width="2"
+     height="6"
+     x="-9"
+     y="0"
+     ry="1"
+     rx="1"
+     transform="matrix(0,-1,1,0,0,0)" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-5"
+     width="2"
+     height="6"
+     x="7"
+     y="-16"
+     ry="1"
+     rx="1"
+     transform="matrix(0,1,-1,0,0,0)" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-9-5"
+     width="1"
+     height="4"
+     x="-0.49983734"
+     y="2.8634806"
+     ry="0.5"
+     rx="0.5"
+     transform="matrix(0.70710678,-0.70710678,0.70710678,0.70710678,0,0)" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-9-5-6"
+     width="1"
+     height="4"
+     x="-0.49983743"
+     y="15.763937"
+     ry="0.5"
+     rx="0.5"
+     transform="matrix(0.70710678,-0.70710678,0.70710678,0.70710678,0,0)" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-9-5-3"
+     width="1"
+     height="4"
+     x="10.813708"
+     y="-8.4503908"
+     ry="0.5"
+     rx="0.5"
+     transform="matrix(0.70710678,0.70710678,-0.70710678,0.70710678,0,0)" />
+  <rect
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     id="rect2982-9-5-3-1"
+     width="1"
+     height="4"
+     x="10.813708"
+     y="4.4500656"
+     ry="0.5"
+     rx="0.5"
+     transform="matrix(0.70710678,0.70710678,-0.70710678,0.70710678,0,0)" />
+  <rect
+     style="fill:#bebebe;fill-opacity:0.53333285;stroke:none"
+     id="rect3957"
+     width="8"
+     height="8"
+     x="4"
+     y="4"
+     rx="2.7755576e-17"
+     ry="2.7755576e-17" />
+</svg>

@@ -4,7 +4,6 @@ Known Issues
 Before Release
 --------------
     Create themes
-    Add icons
 
 Adressed
 --------
@@ -18,3 +17,4 @@ Adressed
     Text focus event bug (evidenced by focus pseudoclass)
     Changed raised mode behavior
     Weird dnd behavior
+    Add icons
