@@ -7,12 +7,15 @@
 .yellow-noteBox {
     background-color: #F8FF42;
     padding: 7px;
-    /*color: #FC64FC;*/
+    color: #000000;
+    selected-color: #ffffff;
+    selection-background-color: #6598cb;
+    caret-size: 1px;
+    caret-color: #000000;
 }
 
 .yellow-noteBox:focus {
-    color: blue;
-    background-color: red;
+    background-color: #FFFF00;
 }
 
 .yellow-scrollBox StBin#trough {
