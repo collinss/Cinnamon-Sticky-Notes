@@ -18,3 +18,4 @@ Adressed
     Changed raised mode behavior
     Weird dnd behavior
     Add icons
+    Fix notes not being tracked on Cinnamon start

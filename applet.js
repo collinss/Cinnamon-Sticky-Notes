@@ -366,9 +366,9 @@ NoteBox.prototype = {
         this.dragPlaceholder = new St.Bin({ style_class: "desklet-drag-placeholder" });
         this.dragPlaceholder.hide();
         
-        this.initializeNotes();
         bottomBox.add_actor(this.actor);
         this.enableMouseTracking(true);
+        this.initializeNotes();
     },
     
     setNotes: function() {
@@ -398,7 +398,9 @@ NoteBox.prototype = {
         note.draggable.connect("drag-begin", Lang.bind(note, note._onDragBegin));
         note.draggable.connect("drag-end", Lang.bind(note, note._onDragEnd));
         note.draggable.connect("drag-cancelled", Lang.bind(note, note._onDragEnd));
-        this.checkMouseTracking();
+        
+        if ( this.mouseTrackEnabled ) note.trackMouse();
+        else note.untrackMouse();
         
         return note;
     },
@@ -587,9 +589,9 @@ NoteBox.prototype = {
         let window = global.screen.get_mouse_window(null);
         
         let enable = !(window && window.window_type != Meta.WindowType.DESKTOP) || notesRaised;
-        if( this.mouseTrackEnabled != enable ) {
+        if ( this.mouseTrackEnabled != enable ) {
             this.mouseTrackEnabled = enable;
-            if( enable ) {
+            if ( enable ) {
                 for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].trackMouse();
             }
             else {
@@ -789,29 +791,6 @@ MyApplet.prototype = {
                                        "Hide",
                                        Lang.bind(this.noteBox, this.noteBox.hideNotes));
         this.buttonBox.add_actor(this.hideNotes.actor);
-        
-        
-        
-        
-        //this.newNote = new St.Button({ label: "New" });
-        //this.buttonBox.add_actor(this.newNote);
-        //this.newNote.connect("clicked", Lang.bind(this.noteBox, this.noteBox.newNote));
-        //
-        //this.raiseNotes = new St.Button({ label: "Raise" });
-        //this.buttonBox.add_actor(this.raiseNotes);
-        //this.raiseNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.raiseNotes));
-        //
-        //this.lowerNotes = new St.Button({ label: "Lower" });
-        //this.buttonBox.add_actor(this.lowerNotes);
-        //this.lowerNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
-        //
-        //this.showNotes = new St.Button({ label: "Show" });
-        //this.buttonBox.add_actor(this.showNotes);
-        //this.showNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.lowerNotes));
-        //
-        //this.hideNotes = new St.Button({ label: "Hide" });
-        //this.buttonBox.add_actor(this.hideNotes);
-        //this.hideNotes.connect("clicked", Lang.bind(this.noteBox, this.noteBox.hideNotes));
         
         this.setVisibleButtons();
     },
