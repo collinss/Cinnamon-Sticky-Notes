@@ -20,3 +20,4 @@ Adressed
     Add icons
     Fix notes not being tracked on Cinnamon start
     Fix new note focus bug in compact mode
+    Hide icon doesn't change on hide from raised mode

@@ -488,6 +488,7 @@ NoteBox.prototype = {
         try {
             if ( settings.hideState ) return;
             this.actor.hide();
+            notesRaised = false;
             settings.hideState = true;
             if ( this.stageEventIds ) {
                 for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
