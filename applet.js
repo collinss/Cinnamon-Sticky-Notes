@@ -59,12 +59,13 @@ SettingsManager.prototype = {
 Signals.addSignalMethods(SettingsManager.prototype);
 
 
-function PanelButton(iconPath, tooltipText, command) {
-    this._init(iconPath, tooltipText, command);
+function PanelButton(parent, iconPath, tooltipText, command) {
+    this._init(parent, iconPath, tooltipText, command);
 }
 
 PanelButton.prototype = {
-    _init: function(iconPath, tooltipText, command) {
+    _init: function(parent, iconPath, tooltipText, command) {
+        this.parent = parent;
         this.command = command;
         
         this.actor = new St.Button({ style_class: "sticky-panelButton" });
@@ -80,6 +81,7 @@ PanelButton.prototype = {
     },
     
     activate: function() {
+        if ( this.parent.menu ) this.parent.menu.close();
         this.command();
     }
 }
@@ -726,7 +728,7 @@ MyApplet.prototype = {
             let file = Gio.file_new_for_path(this.metadata.path+"/sticky.svg");
             let gicon = new Gio.FileIcon({ file: file });
             let appletIcon;
-            if (this._scaleMode) {
+            if ( this._scaleMode ) {
                 appletIcon = new St.Icon({ gicon: gicon,
                                            icon_size: this._panelHeight * .875,
                                            icon_type: St.IconType.FULLCOLOR,
@@ -767,29 +769,34 @@ MyApplet.prototype = {
     buildButtons: function() {
         this.buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
         
-        this.newNote = new PanelButton(this.metadata.path+"/add-symbolic.svg",
+        this.newNote = new PanelButton(this,
+                                       this.metadata.path+"/add-symbolic.svg",
                                        "New",
                                        Lang.bind(this.noteBox, this.noteBox.newNote));
         this.buttonBox.add_actor(this.newNote.actor);
         
-        this.raiseNotes = new PanelButton(this.metadata.path+"/raise-symbolic.svg",
-                                       "Raise",
-                                       Lang.bind(this.noteBox, this.noteBox.raiseNotes));
+        this.raiseNotes = new PanelButton(this,
+                                          this.metadata.path+"/raise-symbolic.svg",
+                                          "Raise",
+                                          Lang.bind(this.noteBox, this.noteBox.raiseNotes));
         this.buttonBox.add_actor(this.raiseNotes.actor);
         
-        this.lowerNotes = new PanelButton(this.metadata.path+"/lower-symbolic.svg",
-                                       "Lower",
-                                       Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.lowerNotes = new PanelButton(this,
+                                          this.metadata.path+"/lower-symbolic.svg",
+                                          "Lower",
+                                          Lang.bind(this.noteBox, this.noteBox.lowerNotes));
         this.buttonBox.add_actor(this.lowerNotes.actor);
         
-        this.showNotes = new PanelButton(this.metadata.path+"/show-symbolic.svg",
-                                       "Show",
-                                       Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+        this.showNotes = new PanelButton(this,
+                                         this.metadata.path+"/show-symbolic.svg",
+                                         "Show",
+                                         Lang.bind(this.noteBox, this.noteBox.lowerNotes));
         this.buttonBox.add_actor(this.showNotes.actor);
         
-        this.hideNotes = new PanelButton(this.metadata.path+"/hide-symbolic.svg",
-                                       "Hide",
-                                       Lang.bind(this.noteBox, this.noteBox.hideNotes));
+        this.hideNotes = new PanelButton(this,
+                                         this.metadata.path+"/hide-symbolic.svg",
+                                         "Hide",
+                                         Lang.bind(this.noteBox, this.noteBox.hideNotes));
         this.buttonBox.add_actor(this.hideNotes.actor);
         
         this.setVisibleButtons();

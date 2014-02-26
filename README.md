@@ -19,3 +19,4 @@ Adressed
     Weird dnd behavior
     Add icons
     Fix notes not being tracked on Cinnamon start
+    Fix new note focus bug in compact mode
