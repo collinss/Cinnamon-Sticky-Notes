@@ -770,31 +770,31 @@ MyApplet.prototype = {
         this.buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
         
         this.newNote = new PanelButton(this,
-                                       this.metadata.path+"/add-symbolic.svg",
+                                       this.metadata.path+"/icons/add-symbolic.svg",
                                        "New",
                                        Lang.bind(this.noteBox, this.noteBox.newNote));
         this.buttonBox.add_actor(this.newNote.actor);
         
         this.raiseNotes = new PanelButton(this,
-                                          this.metadata.path+"/raise-symbolic.svg",
+                                          this.metadata.path+"/icons/raise-symbolic.svg",
                                           "Raise",
                                           Lang.bind(this.noteBox, this.noteBox.raiseNotes));
         this.buttonBox.add_actor(this.raiseNotes.actor);
         
         this.lowerNotes = new PanelButton(this,
-                                          this.metadata.path+"/lower-symbolic.svg",
+                                          this.metadata.path+"/icons/lower-symbolic.svg",
                                           "Lower",
                                           Lang.bind(this.noteBox, this.noteBox.lowerNotes));
         this.buttonBox.add_actor(this.lowerNotes.actor);
         
         this.showNotes = new PanelButton(this,
-                                         this.metadata.path+"/show-symbolic.svg",
+                                         this.metadata.path+"/icons/show-symbolic.svg",
                                          "Show",
                                          Lang.bind(this.noteBox, this.noteBox.lowerNotes));
         this.buttonBox.add_actor(this.showNotes.actor);
         
         this.hideNotes = new PanelButton(this,
-                                         this.metadata.path+"/hide-symbolic.svg",
+                                         this.metadata.path+"/icons/hide-symbolic.svg",
                                          "Hide",
                                          Lang.bind(this.noteBox, this.noteBox.hideNotes));
         this.buttonBox.add_actor(this.hideNotes.actor);
