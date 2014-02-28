@@ -101,7 +101,7 @@ Note.prototype = {
             this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: settings.theme + "-noteBox", height: START_HEIGHT, width: START_WIDTH });
             this.actor._delegate = this;
             
-            this.scrollBox = new St.ScrollView({ style_class: settings.theme + "-scrollBox" });
+            this.scrollBox = new St.ScrollView();
             this.actor.add_actor(this.scrollBox);
             this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
             
