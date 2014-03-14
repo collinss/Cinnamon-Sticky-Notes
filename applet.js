@@ -370,6 +370,7 @@ NoteBox.prototype = {
         
         bottomBox.add_actor(this.actor);
         this.enableMouseTracking(true);
+        
         this.initializeNotes();
     },
     
@@ -726,21 +727,21 @@ MyApplet.prototype = {
         let buttonBin;
         if ( settings.collapsed ) {
             this.actor.set_track_hover(true);
-            let file = Gio.file_new_for_path(this.metadata.path+"/sticky.svg");
+            let file = Gio.file_new_for_path(this.metadata.path+"/icons/sticky-symbolic.svg");
             let gicon = new Gio.FileIcon({ file: file });
             let appletIcon;
             if ( this._scaleMode ) {
                 appletIcon = new St.Icon({ gicon: gicon,
-                                           icon_size: this._panelHeight * .875,
-                                           icon_type: St.IconType.FULLCOLOR,
+                                           icon_size: this._panelHeight * .525,
+                                           icon_type: St.IconType.SYMBOLIC,
                                            reactive: true,
                                            track_hover: true,
                                            style_class: "applet-icon" });
             }
             else {
                 appletIcon = new St.Icon({ gicon: gicon,
-                                           icon_size: 22,
-                                           icon_type: St.IconType.FULLCOLOR,
+                                           icon_size: 16,
+                                           icon_type: St.IconType.SYMBOLIC,
                                            reactive: true,
                                            track_hover: true,
                                            style_class: "applet-icon" });

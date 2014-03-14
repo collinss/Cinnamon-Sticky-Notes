@@ -1,9 +1,17 @@
+/*Panel default*/
+.sticky-buttonBox {
+    spacing: 4px;
+}
+
+
+/*Camoflage fallback*/
 .sticky-noteBox {
     background-color: #ffffff;
-    /*border: solid 2px #000000;*/
     padding: 5px;
 }
 
+
+/*Mint theme*/
 .mint-noteBox {
     border: 2px solid #a5a5a5;
     border-radius: 12px;
@@ -41,6 +49,8 @@
     background-color: rgba(100,100,100,1);
 }
 
+
+/*Mint-X theme*/
 .mintx-noteBox {
     border-image: url("bg-1.png") 6;
     padding: 10px;
@@ -75,6 +85,8 @@
     border: 1px solid #949494;
 }
 
+
+/*Yellow theme*/
 .yellow-noteBox {
     background-color: #F8FF42;
     padding: 10px;
@@ -104,6 +116,14 @@
     border-radius: 0px;
 }
 
+.yellow-noteBox StButton#vhandle:hover {
+    background-color: #E5E500;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+
+/*Red theme*/
 .red-noteBox {
     background-color: #FF4242;
     padding: 7px;
@@ -133,6 +153,14 @@
     border-radius: 0px;
 }
 
+.red-noteBox StButton#vhandle:hover {
+    background-color: #E20000;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+
+/*Blue theme*/
 .blue-noteBox {
     background-color: #4281FF;
     padding: 7px;
@@ -160,8 +188,17 @@
 .blue-noteBox StButton#vhandle {
     background-color: #004BE2;
     border-radius: 0px;
+    border-color: transparent;
 }
 
+.blue-noteBox StButton#vhandle:hover {
+    background-color: #004BE2;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+
+/*Green theme*/
 .green-noteBox {
     background-color: #42FF42;
     padding: 7px;
@@ -188,6 +225,12 @@
 }
 
 .green-noteBox StButton#vhandle {
+    background-color: #00E200;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+.green-noteBox StButton#vhandle:hover {
     background-color: #00E200;
     border-radius: 0px;
     border-color: transparent;
