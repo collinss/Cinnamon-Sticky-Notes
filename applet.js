@@ -28,7 +28,6 @@ const PADDING = 10;
 
 let topBox, bottomBox;
 let mouseTrackEnabled;
-let notesRaised;
 
 
 let settings;
@@ -42,6 +41,7 @@ SettingsManager.prototype = {
             
             this.settings = new Settings.AppletSettings(this, uuid, instanceId);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "storedNotes", "storedNotes");
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "raisedState", "raisedState");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "collapsed", "collapsed", function() { this.emit("collapsed-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme", function() { this.emit("theme-changed"); });
@@ -210,7 +210,7 @@ Note.prototype = {
         }
         
         if ( event.get_source() == this.text ) {
-            if ( !notesRaised ) this.focusText();
+            if ( !settings.raisedState ) this.focusText();
         }
         else {
             this.focusText();
@@ -359,16 +359,20 @@ NoteBox.prototype = {
         
         this.actor = new Clutter.Group();
         this.actor._delegate = this;
-        if ( settings.startState == 1 || ( settings.startState == 2 && settings.hideState ) ) {
+        if ( settings.startState == 2 || ( settings.startState == 3 && settings.hideState ) ) {
+            this.hideNotes();
             this.actor.hide();
             settings.hideState = true;
         }
-        else if ( settings.startState == 0 ) settings.hideState = false;
+        else {
+            if ( settings.startState == 0 ) settings.hideState = false;
+            if ( settings.startState == 1 || ( settings.startState == 3 && settings.raisedState ) ) this.raiseNotes();
+            else this.lowerNotes();
+        }
         
         this.dragPlaceholder = new St.Bin({ style_class: "desklet-drag-placeholder" });
         this.dragPlaceholder.hide();
         
-        bottomBox.add_actor(this.actor);
         this.enableMouseTracking(true);
         
         this.initializeNotes();
@@ -452,14 +456,13 @@ NoteBox.prototype = {
     
     raiseNotes: function() {
         try {
-            if ( notesRaised ) return;
             global.reparentActor(this.actor, topBox);
             if ( settings.hideState ) {
                 this.actor.show();
                 settings.hideState = false;
             }
             
-            notesRaised = true;
+            settings.raisedState = true;
             this.checkMouseTracking();
             
             this.emit("state-changed");
@@ -476,7 +479,7 @@ NoteBox.prototype = {
                 settings.hideState = false;
             }
             
-            notesRaised = false;
+            settings.raisedState = false;
             this.checkMouseTracking();
             
             this.emit("state-changed");
@@ -487,14 +490,13 @@ NoteBox.prototype = {
     
     hideNotes: function() {
         try {
-            if ( settings.hideState ) return;
             this.actor.hide();
-            notesRaised = false;
+            settings.raisedState = false;
             settings.hideState = true;
-            if ( this.stageEventIds ) {
-                for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
-                this.stageEventIds = null;
-            }
+            //if ( this.stageEventIds ) {
+            //    for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
+            //    this.stageEventIds = null;
+            //}
             this.emit("state-changed");
         } catch(e) {
             global.logError(e);
@@ -592,7 +594,7 @@ NoteBox.prototype = {
     checkMouseTracking: function() {
         let window = global.screen.get_mouse_window(null);
         
-        let enable = !(window && window.window_type != Meta.WindowType.DESKTOP) || notesRaised;
+        let enable = !(window && window.window_type != Meta.WindowType.DESKTOP) || settings.raisedState;
         if ( this.mouseTrackEnabled != enable ) {
             this.mouseTrackEnabled = enable;
             if ( enable ) {
@@ -805,7 +807,7 @@ MyApplet.prototype = {
     },
     
     setVisibleButtons: function() {
-        if ( notesRaised ) {
+        if ( settings.raisedState ) {
             this.showNotes.actor.hide();
             this.hideNotes.actor.show();
             this.raiseNotes.actor.hide();

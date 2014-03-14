@@ -4,6 +4,11 @@
         "default": []
     },
     
+    "raisedState": {
+        "type": "generic",
+        "default": false
+    },
+    
     "hideState": {
         "type": "generic",
         "default": false
@@ -21,8 +26,9 @@
         "default": 0,
         "options": {
             "Show notes on Desktop": 0,
-            "Hide notes": 1,
-            "Restore previous state": 2
+            "Show notes above windows": 1,
+            "Hide notes": 2,
+            "Restore previous state": 3
         }
     },
     
