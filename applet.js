@@ -46,6 +46,7 @@ SettingsManager.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "collapsed", "collapsed", function() { this.emit("collapsed-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme", function() { this.emit("theme-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
+            this.settings.bindProperty(Settings.BindingDirection.IN, "lowerOnClick", "lowerOnClick");
             
         } catch(e) {
             global.logError(e);
@@ -170,12 +171,16 @@ Note.prototype = {
     },
     
     _onDragBegin: function() {
+        if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
         global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
     },
     
     _onDragEnd: function() {
         this.updateDnD();
-        global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
+        if ( this.previousMode ) {
+            global.set_stage_input_mode(this.previousMode);
+            this.previousMode = null;
+        }
         this.trackMouse();
     },
     
@@ -203,7 +208,11 @@ Note.prototype = {
         if ( event.get_button() == 3 ) return true;
         
         if ( this.pointerGrabbed ) {
-            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+            if ( this.previousMode ) {
+                global.set_stage_input_mode(this.previousMode);
+                this.previousMode = null;
+            }
+            else global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
             Clutter.ungrab_pointer();
             this.pointerGrabbed = false;
             return false;
@@ -249,6 +258,7 @@ Note.prototype = {
         if ( this.menu.isOpen ) this.menu.close();
         
         if ( actor == this.text ) {
+            if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
             global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
             Clutter.grab_pointer(this.text);
             this.pointerGrabbed = true;
@@ -300,12 +310,15 @@ Note.prototype = {
     focusText: function() {
         let currentMode = global.stage_input_mode;
         if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.textBox.has_key_focus() ) return;
-        this.previousMode = currentMode;
+        if ( !this.previousMode ) this.previousMode = currentMode;
         if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
             global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
         }
         
         this.textBox.grab_key_focus();
+        if ( settings.raisedState && settings.lowerOnClick ) {
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
+        }
     },
     
     unfocusText: function() {
@@ -314,7 +327,10 @@ Note.prototype = {
             this.unfocusId = null;
         }
         if ( global.stage_input_mode == Cinnamon.StageInputMode.FOCUSED ) {
-            if ( this.previousMode ) global.set_stage_input_mode(this.previousMode);
+            if ( this.previousMode ) {
+                global.set_stage_input_mode(this.previousMode);
+                this.previousMode = null;
+            }
             else global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
         }
         this.previousMode = null;
@@ -464,7 +480,9 @@ NoteBox.prototype = {
             
             settings.raisedState = true;
             this.checkMouseTracking();
-            
+            if ( settings.lowerOnClick ) {
+                this.setModal();
+            }
             this.emit("state-changed");
         } catch(e) {
             global.logError(e);
@@ -482,6 +500,7 @@ NoteBox.prototype = {
             settings.raisedState = false;
             this.checkMouseTracking();
             
+            this.unsetModal();
             this.emit("state-changed");
         } catch(e) {
             global.logError(e);
@@ -493,14 +512,57 @@ NoteBox.prototype = {
             this.actor.hide();
             settings.raisedState = false;
             settings.hideState = true;
-            //if ( this.stageEventIds ) {
-            //    for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
-            //    this.stageEventIds = null;
-            //}
+            this.unsetModal();
             this.emit("state-changed");
         } catch(e) {
             global.logError(e);
         }
+    },
+    
+    setModal: function() {
+        if ( this.isModal ) return;
+        
+        this.stageEventIds = [];
+        this.stageEventIds.push(global.stage.connect("captured-event", Lang.bind(this, this.handleStageEvent)));
+        this.stageEventIds.push(global.stage.connect("enter-event", Lang.bind(this, this.handleStageEvent)));
+        this.stageEventIds.push(global.stage.connect("leave-event", Lang.bind(this, this.handleStageEvent)));
+        
+        Main.pushModal(this.actor);
+        this.isModal = true;
+    },
+    
+    unsetModal: function() {
+        if ( !this.isModal ) return;
+        
+        for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
+        this.stageEventIds = null;
+        Main.popModal(this.actor);
+        this.isModal = false;
+    },
+    
+    handleStageEvent: function(actor, event) {
+        try {
+            
+            let target = event.get_source();
+            
+            for ( let i = 0; i < this.notes.length; i++ ) {
+                if ( this.notes[i].actor == target ||
+                     this.notes[i].actor.contains(target) ||
+                     this.notes[i].menu.actor == target ||
+                     this.notes[i].menu.actor.contains(target) ) return false;
+            }
+            
+            let type = event.type();
+            if ( type == Clutter.EventType.BUTTON_PRESS ) return true;
+            if ( type == Clutter.EventType.BUTTON_RELEASE ) {
+                this.lowerNotes();
+                return false;
+            }
+            
+        } catch(e) {
+            global.logError(e);
+        }
+        return false;
     },
     
     handleDragOver: function(source, actor, x, y, time) {
@@ -563,14 +625,16 @@ NoteBox.prototype = {
         
         Main.uiGroup.remove_actor(actor);
         this.actor.add_actor(actor);
+        
+        this.dragPlaceholder.hide();
+        this.last_x = -1;
+        this.last_y = -1;
+        
         mouseTrackEnabled = false;
         this.checkMouseTracking();
         
         this.update();
         
-        this.dragPlaceholder.hide();
-        this.last_x = -1;
-        this.last_y = -1;
         return true;
     },
     

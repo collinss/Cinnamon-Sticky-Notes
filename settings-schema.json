@@ -14,22 +14,9 @@
         "default": false
     },
     
-    "collapsed": {
-        "type": "checkbox",
-        "description": "Collapsed",
-        "default": "false"
-    },
-    
-    "startState": {
-        "type": "combobox",
-        "description": "When Cinnamon starts",
-        "default": 0,
-        "options": {
-            "Show notes on Desktop": 0,
-            "Show notes above windows": 1,
-            "Hide notes": 2,
-            "Restore previous state": 3
-        }
+    "appearanceHeader": {
+        "type": "header",
+        "description": "Appearance"
     },
     
     "theme": {
@@ -45,5 +32,34 @@
             "Green": "green",
             "Camouflage (tries to blend in)": "sticky"
         }
+    },
+    
+    "collapsed": {
+        "type": "checkbox",
+        "description": "Panel Collapsed",
+        "default": "false"
+    },
+    
+    "behaviorHeader": {
+        "type": "header",
+        "description": "Behavior"
+    },
+    
+    "startState": {
+        "type": "combobox",
+        "description": "When Cinnamon starts",
+        "default": 0,
+        "options": {
+            "Show notes on Desktop": 0,
+            "Show notes above windows": 1,
+            "Hide notes": 2,
+            "Restore previous state": 3
+        }
+    },
+    
+    "lowerOnClick": {
+        "type": "checkbox",
+        "description": "Lower notes on mouse click",
+        "default": true
     }
 }
