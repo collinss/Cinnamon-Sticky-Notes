@@ -27,7 +27,6 @@ const PADDING = 10;
 
 
 let topBox, bottomBox;
-let mouseTrackEnabled;
 
 
 let settings;
@@ -630,7 +629,7 @@ NoteBox.prototype = {
         this.last_x = -1;
         this.last_y = -1;
         
-        mouseTrackEnabled = false;
+        this.mouseTrackEnabled = -1;
         this.checkMouseTracking();
         
         this.update();
@@ -644,7 +643,7 @@ NoteBox.prototype = {
         Main.uiGroup.remove_actor(actor);
         this.actor.add_actor(actor);
         
-        mouseTrackEnabled = -1;
+        this.mouseTrackEnabled = -1;
         this.checkMouseTracking();
         
         this.dragPlaceholder.hide();
@@ -657,8 +656,8 @@ NoteBox.prototype = {
     
     checkMouseTracking: function() {
         let window = global.screen.get_mouse_window(null);
-        
-        let enable = !(window && window.window_type != Meta.WindowType.DESKTOP) || settings.raisedState;
+        let hasMouseWindow = window && window.window_type != Meta.WindowType.DESKTOP;
+        let enable = !hasMouseWindow || settings.raisedState;
         if ( this.mouseTrackEnabled != enable ) {
             this.mouseTrackEnabled = enable;
             if ( enable ) {
