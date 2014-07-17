@@ -26,9 +26,6 @@ const START_WIDTH = 200;
 const PADDING = 10;
 
 
-let topBox, bottomBox;
-
-
 let settings;
 function SettingsManager(uuid, instanceId) {
     this._init(uuid, instanceId);
@@ -148,11 +145,6 @@ Note.prototype = {
         }
     },
     
-    test: function() {
-        global.log(!Main.uiGroup.get_skip_paint(this.actor));
-        Mainloop.timeout_add_seconds(2, Lang.bind(this, this.test));
-    },
-    
     buildMenu: function() {
         let remove = new PopupMenu.PopupMenuItem("Remove");
         this.menu.addMenuItem(remove);
@@ -176,6 +168,7 @@ Note.prototype = {
     
     _onDragEnd: function() {
         this.updateDnD();
+        Main.popModal(this.actor, global.get_current_time());
         if ( this.previousMode ) {
             global.set_stage_input_mode(this.previousMode);
             this.previousMode = null;
@@ -370,9 +363,10 @@ NoteBox.prototype = {
         this.notes = [];
         this.last_x = -1;
         this.last_y = -1;
-        this.mouseTrackEnabled = -1;
+        this.mouseTrackEnabled = false;
         
         this.actor = new Clutter.Group();
+        Main.uiGroup.add_actor(this.actor);
         this.actor._delegate = this;
         if ( settings.startState == 2 || ( settings.startState == 3 && settings.hideState ) ) {
             this.hideNotes();
@@ -414,7 +408,6 @@ NoteBox.prototype = {
         
         note.connect("destroy", Lang.bind(this, this.removeNote));
         note.connect("changed", Lang.bind(this, this.update));
-        note.actor.connect("motion-event", Lang.bind(this, this.checkMouseTracking));
         
         note.draggable = DND.makeDraggable(note.actor, { restoreOnSuccess: true }, this.actor);
         note.draggable.connect("drag-begin", Lang.bind(note, note._onDragBegin));
@@ -471,7 +464,7 @@ NoteBox.prototype = {
     
     raiseNotes: function() {
         try {
-            global.reparentActor(this.actor, topBox);
+            this.actor.raise_top();
             if ( settings.hideState ) {
                 this.actor.show();
                 settings.hideState = false;
@@ -490,7 +483,7 @@ NoteBox.prototype = {
     
     lowerNotes: function() {
         try {
-            global.reparentActor(this.actor, bottomBox);
+            this.actor.lower(global.window_group);
             if ( settings.hideState ) {
                 this.actor.show();
                 settings.hideState = false;
@@ -657,7 +650,7 @@ NoteBox.prototype = {
     checkMouseTracking: function() {
         let window = global.screen.get_mouse_window(null);
         let hasMouseWindow = window && window.window_type != Meta.WindowType.DESKTOP;
-        let enable = !hasMouseWindow || settings.raisedState;
+        let enable = !hasMouseWindow ;
         if ( this.mouseTrackEnabled != enable ) {
             this.mouseTrackEnabled = enable;
             if ( enable ) {
@@ -667,6 +660,7 @@ NoteBox.prototype = {
                 for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].untrackMouse();
             }
         }
+        return true;
     },
     
     enableMouseTracking: function(enable) {
@@ -749,7 +743,8 @@ MyApplet.prototype = {
             
             this.menuManager = new PopupMenu.PopupMenuManager(this);
             
-            this.addNoteContainers();
+            this.noteBox = new NoteBox();
+            this.noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
             this.buildPanel();
             
             settings.connect("collapsed-changed", Lang.bind(this, this.buildPanel));
@@ -763,21 +758,6 @@ MyApplet.prototype = {
         this.noteBox.destroy();
         topBox.destroy();
         bottomBox.destroy();
-    },
-    
-    addNoteContainers: function() {
-        //add space to ui group
-        let uiGroup = Main.uiGroup;
-        
-        topBox = new St.Bin({ x_expand: true, x_fill: true, y_expand: true, y_fill: true });
-        uiGroup.add_actor(topBox);
-        
-        bottomBox = new St.Bin({ x_expand: true, x_fill: true, y_expand: true, y_fill: true });
-        uiGroup.add_actor(bottomBox);
-        uiGroup.lower_child(bottomBox, global.window_group);
-        
-        this.noteBox = new NoteBox();
-        this.noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
     },
     
     buildPanel: function() {
