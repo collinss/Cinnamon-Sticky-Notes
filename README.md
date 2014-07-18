@@ -1,6 +1,5 @@
 Known Issues
 ------------
-    Chrome tracking geometry bug
 
 Before Release
 --------------
@@ -23,3 +22,6 @@ Adressed
     Hide icon doesn't change on hide from raised mode
     Create themes
     Add option to lower on click
+    Fixed chrome tracking geometry bug
+    Added about dialog
+    Fixed note passthrough in raised mode
