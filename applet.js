@@ -510,6 +510,11 @@ NoteBox.prototype = {
         this.initializeNotes();
     },
     
+    destroy: function() {
+        this.actor.destroy();
+        this.dragPlaceholder.destroy();
+    },
+    
     setNotes: function() {
         for ( let i = 0; i < this.storedNotes.length; i++ ) {
             this.addNote(this.storedNotes[i]);
@@ -880,8 +885,6 @@ MyApplet.prototype = {
     
     on_applet_removed_from_panel: function() {
         this.noteBox.destroy();
-        topBox.destroy();
-        bottomBox.destroy();
     },
     
     openAbout: function() {
