@@ -225,11 +225,14 @@ Note.prototype = {
             this.actor.add_actor(this.scrollBox);
             this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
             
-            this.textContainer = new St.BoxLayout();
-            this.scrollBox.add_actor(this.textContainer);
+            this.textBin = new St.BoxLayout();
+            this.scrollBox.add_actor(this.textBin);
+            
+            this.textWrapper = new Cinnamon.GenericContainer();
+            this.textBin.add_actor(this.textWrapper);
             
             this.textBox = new St.Entry({  });
-            this.textContainer.add_actor(this.textBox);
+            this.textWrapper.add_actor(this.textBox);
             if ( info ) this.textBox.text = info.text;
             
             this.text = this.textBox.clutter_text;
@@ -240,6 +243,9 @@ Note.prototype = {
             this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
             this.text.set_selectable(true);
             
+            this.textWrapper.connect("allocate", Lang.bind(this, this.allocate));
+            this.textWrapper.connect("get-preferred-height", Lang.bind(this, this.getPreferedHeight));
+            this.textWrapper.connect("get-preferred-width", Lang.bind(this, this.getPreferedWidth));
             this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
             this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
@@ -275,6 +281,8 @@ Note.prototype = {
             this.emit("destroy", this);
         }));
         
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
         let copy = new PopupMenu.PopupMenuItem("Copy");
         this.menu.addMenuItem(copy);
         copy.connect("activate", Lang.bind(this, this.copy));
@@ -282,6 +290,32 @@ Note.prototype = {
         let paste = new PopupMenu.PopupMenuItem("Paste");
         this.menu.addMenuItem(paste);
         paste.connect("activate", Lang.bind(this, this.paste));
+    },
+    
+    allocate: function(actor, box, flags) {
+        let childBox = new Clutter.ActorBox();
+        
+        childBox.x1 = box.x1;
+        childBox.x2 = box.x2;
+        childBox.y1 = box.y1;
+        childBox.y2 = box.y2;
+        this.textBox.allocate(childBox, flags);
+    },
+    
+    getPreferedHeight: function(actor, forWidth, alloc) {
+        let [minWidth, natWidth] = actor.get_preferred_width(0);
+        let [minHeight, natHeight] = this.text.get_preferred_height(natWidth);
+        
+        alloc.min_size = minHeight;
+        alloc.natural_size = natHeight;
+    },
+    
+    getPreferedWidth: function(actor, forHeight, alloc) {
+        let sbWidth = this.scrollBox.vscroll.width;
+        let sNode = this.actor.get_theme_node();
+        let width = sNode.adjust_for_width(this.actor.width);
+        alloc.min_size = width - sbWidth;
+        alloc.natural_size = width - sbWidth;
     },
     
     _onDragBegin: function() {
@@ -388,7 +422,7 @@ Note.prototype = {
         
         if ( textHeight <= scrollHeight ) return;
         
-        let adjustment = this.textContainer.vadjustment;
+        let adjustment = this.textBin.vadjustment;
         let cursorY = geometry.y;
         let startY = adjustment.value;
         let endY = scrollHeight + startY;

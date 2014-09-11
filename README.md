@@ -4,9 +4,10 @@ Known Issues
 
 Before Release
 --------------
-    option to make panel menu persistant
+    fix focus issues (eg double click)
 
 Adressed
 --------
     notes not removed when applet is
-    
+    option to make panel menu persistant
+    fixed allocation for wrapped text
