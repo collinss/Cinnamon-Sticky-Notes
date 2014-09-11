@@ -357,11 +357,7 @@ Note.prototype = {
         if ( event.get_button() == 3 ) return true;
         
         if ( this.pointerGrabbed ) {
-            if ( this.previousMode ) {
-                global.set_stage_input_mode(this.previousMode);
-                this.previousMode = null;
-            }
-            else global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
             Clutter.ungrab_pointer();
             this.pointerGrabbed = false;
             return false;
