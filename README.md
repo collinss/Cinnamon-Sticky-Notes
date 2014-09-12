@@ -12,4 +12,6 @@ Adressed
     fixed allocation for wrapped text
     fix focus issues (eg double click)
     theme tweaks & 2 new themes
+    add option to configure height and width
+    add options to note context menu and rearrange
     

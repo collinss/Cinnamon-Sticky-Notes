@@ -19,10 +19,14 @@ const Tweener = imports.ui.tweener;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
+const Util = imports.misc.util;
 
 const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
+
+
+let applet;
 
 
 function AboutDialog(metadata) {
@@ -283,14 +287,6 @@ Note.prototype = {
     },
     
     buildMenu: function() {
-        let remove = new PopupMenu.PopupMenuItem("Remove");
-        this.menu.addMenuItem(remove);
-        remove.connect("activate", Lang.bind(this, function() {
-            this.emit("destroy", this);
-        }));
-        
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
         let copy = new PopupMenu.PopupMenuItem("Copy");
         this.menu.addMenuItem(copy);
         copy.connect("activate", Lang.bind(this, this.copy));
@@ -298,6 +294,21 @@ Note.prototype = {
         let paste = new PopupMenu.PopupMenuItem("Paste");
         this.menu.addMenuItem(paste);
         paste.connect("activate", Lang.bind(this, this.paste));
+        
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
+        let about = new Applet.MenuItem(_("About..."), "dialog-question", Lang.bind(applet, applet.openAbout))
+        this.menu.addMenuItem(about);
+        
+        let configure = new Applet.MenuItem("Configure...", "system-run", Lang.bind(this, function() {
+            Util.spawnCommandLine("cinnamon-settings applets " + applet.metadata.uuid + " " + applet.instanceId);
+        }));
+        this.menu.addMenuItem(configure);
+        
+        let remove = new Applet.MenuItem("Remove this note", "edit-delete", Lang.bind(this, function() {
+            this.emit("destroy", this);
+        }));
+        this.menu.addMenuItem(remove);
     },
     
     allocate: function(actor, box, flags) {
@@ -883,6 +894,7 @@ MyApplet.prototype = {
     _init: function(metadata, orientation, panelHeight, instanceId) {
         try {
             
+            applet = this;
             this.metadata = metadata;
             this.instanceId = instanceId;
             this.orientation = orientation;
