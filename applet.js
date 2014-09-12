@@ -22,8 +22,6 @@ const Signals = imports.signals;
 
 const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
-const START_HEIGHT = 200;
-const START_WIDTH = 200;
 const PADDING = 10;
 
 
@@ -164,6 +162,8 @@ SettingsManager.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "collapsed", "collapsed", function() { this.emit("collapsed-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme", function() { this.emit("theme-changed"); });
+            this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
+            this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
             this.settings.bindProperty(Settings.BindingDirection.IN, "lowerOnClick", "lowerOnClick");
             
@@ -218,7 +218,7 @@ Note.prototype = {
             this._dragging = false;
             this._dragOffset = [0, 0];
             
-            this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: settings.theme + "-noteBox", height: START_HEIGHT, width: START_WIDTH });
+            this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: settings.theme + "-noteBox", height: settings.height, width: settings.width });
             this.actor._delegate = this;
             
             this.scrollBox = new St.ScrollView();
@@ -256,6 +256,14 @@ Note.prototype = {
             this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             settings.connect("theme-changed", Lang.bind(this, function() {
                 this.actor.style_class = settings.theme + "-noteBox";
+            }));
+            settings.connect("height-changed", Lang.bind(this, function() {
+                this.actor.height = settings.height;
+                this.actor.que_relayout();
+            }));
+            settings.connect("width-changed", Lang.bind(this, function() {
+                this.actor.width = settings.width;
+                this.actor.que_relayout();
             }));
             
             let padding = new St.Bin({ reactive: true });
@@ -545,12 +553,6 @@ NoteBox.prototype = {
         this.dragPlaceholder.destroy();
     },
     
-    setNotes: function() {
-        for ( let i = 0; i < this.storedNotes.length; i++ ) {
-            this.addNote(this.storedNotes[i]);
-        }
-    },
-    
     addNote: function(info) {
         let note = new Note(info);
         let x, y;
@@ -594,13 +596,6 @@ NoteBox.prototype = {
             }
         }
         this.update();
-    },
-    
-    removeAll: function() {
-        for ( let i = 0; i < this.notes.length; i++ ) {
-            this.notes[i].destroy();
-        }
-        this.notes = [];
     },
     
     update: function() {
@@ -843,8 +838,8 @@ NoteBox.prototype = {
         if ( Main.desktop_layout == Main.LAYOUT_CLASSIC ) height -= Main.panel2.actor.height;
         
         //calculate number of squares
-        let rowHeight = START_HEIGHT + PADDING;
-        let columnWidth = START_WIDTH + PADDING;
+        let rowHeight = settings.height + PADDING;
+        let columnWidth = settings.width + PADDING;
         let rows = Math.floor(height/rowHeight);
         let columns = Math.floor(width/columnWidth);
         

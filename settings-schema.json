@@ -19,6 +19,24 @@
         "description": "Appearance"
     },
     
+    "height": {
+        "type": "scale",
+        "description": "Height",
+        "min": 100,
+        "max": 500,
+        "step": 10,
+        "default": 200
+    },
+    
+    "width": {
+        "type": "scale",
+        "description": "Width",
+        "min": 100,
+        "max": 500,
+        "step": 10,
+        "default": 200
+    },
+    
     "theme": {
         "type": "combobox",
         "description": "Theme",
@@ -30,6 +48,8 @@
             "Red": "red",
             "Blue": "blue",
             "Green": "green",
+            "Purple": "purple",
+            "Orange": "orange",
             "Camouflage (tries to blend in)": "sticky"
         }
     },
