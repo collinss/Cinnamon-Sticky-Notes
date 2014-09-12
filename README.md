@@ -11,4 +11,5 @@ Adressed
     option to make panel menu persistant
     fixed allocation for wrapped text
     fix focus issues (eg double click)
+    theme tweaks & 2 new themes
     

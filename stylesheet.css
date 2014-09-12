@@ -13,11 +13,12 @@
 
 /*Mint theme*/
 .mint-noteBox {
+    font: 12px cantarell, sans-serif;
     border: 2px solid #a5a5a5;
     border-radius: 12px;
     background-color: rgba(80, 80, 80, 0.8);
     padding: 10px;
-    padding-top: 15px;
+    padding-top: 25px;
     color: #ffffff;
     selected-color: #000000;
     selection-background-color: #ffffff;
@@ -34,12 +35,14 @@
 }
 
 .mint-noteBox StBin#trough {
+    border-image: none;
     background-color: rgba(0,0,0,0);
     border: 1px solid #555555;
     border-radius: 4px;
 }
 
 .mint-noteBox StButton#vhandle {
+    background-gradient-direction: none;
     background-color: rgba(90,90,90,1);
     border: 1px solid rgba(90,90,90,1);
     border-radius: 4px;
@@ -52,9 +55,11 @@
 
 /*Mint-X theme*/
 .mintx-noteBox {
+    font-family: Sans;
+    font-size: 9pt;
     border-image: url("bg-1.png") 6;
     padding: 10px;
-    padding-top: 15px;
+    padding-top: 25px;
     color: rgb(70,70,70);
     selected-color: #ffffff;
     selection-background-color: #accd8a;
@@ -71,10 +76,13 @@
 }
 
 .mintx-noteBox StBin#trough {
+    border-image: none;
     background-color: rgba(0,0,0,0);
+    border-color: transparent;
 }
 
 .mintx-noteBox StButton#vhandle {
+    background-gradient-direction: none;
     background-color: rgb(216,216,216);
     border: 1px solid #949494;
     border-radius: 6px;
@@ -88,9 +96,10 @@
 
 /*Yellow theme*/
 .yellow-noteBox {
+    font: 12px arial, sans-serif;
     background-color: #F8FF42;
     padding: 10px;
-    padding-top: 15px;
+    padding-top: 25px;
     color: #000000;
     selected-color: #ffffff;
     selection-background-color: #6598cb;
@@ -108,12 +117,16 @@
 }
 
 .yellow-noteBox StBin#trough {
+    border-image: none;
     background-color: #C9C900;
+    border-color: transparent;
 }
 
 .yellow-noteBox StButton#vhandle {
+    background-gradient-direction: none;
     background-color: #E5E500;
     border-radius: 0px;
+    border-color: transparent;
 }
 
 .yellow-noteBox StButton#vhandle:hover {
@@ -125,9 +138,10 @@
 
 /*Red theme*/
 .red-noteBox {
+    font: 12px arial, sans-serif;
     background-color: #FF4242;
     padding: 7px;
-    padding-top: 15px;
+    padding-top: 25px;
     color: #000000;
     selected-color: #ffffff;
     selection-background-color: #7CC663;
@@ -145,12 +159,16 @@
 }
 
 .red-noteBox StBin#trough {
+    border-image: none;
     background-color: #C60000;
+    border-color: transparent;
 }
 
 .red-noteBox StButton#vhandle {
+    background-gradient-direction: none;
     background-color: #E20000;
     border-radius: 0px;
+    border-color: transparent;
 }
 
 .red-noteBox StButton#vhandle:hover {
@@ -162,9 +180,10 @@
 
 /*Blue theme*/
 .blue-noteBox {
+    font: 12px arial, sans-serif;
     background-color: #4281FF;
     padding: 7px;
-    padding-top: 15px;
+    padding-top: 25px;
     color: #000000;
     selected-color: #ffffff;
     selection-background-color: #C99F64;
@@ -182,10 +201,13 @@
 }
 
 .blue-noteBox StBin#trough {
+    border-image: none;
     background-color: #0042C6;
+    border-color: transparent;
 }
 
 .blue-noteBox StButton#vhandle {
+    background-gradient-direction: none;
     background-color: #004BE2;
     border-radius: 0px;
     border-color: transparent;
@@ -200,9 +222,10 @@
 
 /*Green theme*/
 .green-noteBox {
+    font: 12px arial, sans-serif;
     background-color: #42FF42;
     padding: 7px;
-    padding-top: 15px;
+    padding-top: 25px;
     color: #000000;
     selected-color: #ffffff;
     selection-background-color: #C96464;
@@ -220,11 +243,13 @@
 }
 
 .green-noteBox StBin#trough {
+    border-image: none;
     background-color: #00C600;
     border-color: transparent;
 }
 
 .green-noteBox StButton#vhandle {
+    background-gradient-direction: none;
     background-color: #00E200;
     border-radius: 0px;
     border-color: transparent;
@@ -235,6 +260,91 @@
     border-radius: 0px;
     border-color: transparent;
 }
+
+
+/*Purple theme*/
+.purple-noteBox {
+    font: 12px arial, sans-serif;
+    background-color: #935AFC;
+    padding: 7px;
+    padding-top: 25px;
+    color: #000000;
+    selected-color: #ffffff;
+    selection-background-color: #E7ED40;
+    caret-size: 1px;
+    caret-color: #000000;
+    box-shadow: 2px 2px 7px;
+}
+
+.purple-noteBox:focus {
+    background-color: #8742FF;
+}
+
+.purple-noteBox StScrollBar {
+    min-width: 10px;
+}
+
+.purple-noteBox StBin#trough {
+    border-image: none;
+    background-color: #4400C4;
+    border-color: transparent;
+}
+
+.purple-noteBox StButton#vhandle {
+    background-gradient-direction: none;
+    background-color: #5200E0;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+.purple-noteBox StButton#vhandle:hover {
+    background-color: #5200E0;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+
+/*Orange theme*/
+.orange-noteBox {
+    font: 12px arial, sans-serif;
+    background-color: #E76A28;
+    padding: 7px;
+    padding-top: 25px;
+    color: #000000;
+    selected-color: #ffffff;
+    selection-background-color: #415BEA;
+    caret-size: 1px;
+    caret-color: #000000;
+    box-shadow: 2px 2px 7px;
+}
+
+.orange-noteBox:focus {
+    background-color: #E57842;
+}
+
+.orange-noteBox StScrollBar {
+    min-width: 10px;
+}
+
+.orange-noteBox StBin#trough {
+    border-image: none;
+    background-color: #AD4A08;
+    border-color: transparent;
+}
+
+.orange-noteBox StButton#vhandle {
+    background-gradient-direction: none;
+    background-color: #EA8A04;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
+.orange-noteBox StButton#vhandle:hover {
+    background-color: #EA8A04;
+    border-radius: 0px;
+    border-color: transparent;
+}
+
 
 /*about dialog*/
 .about-content {
