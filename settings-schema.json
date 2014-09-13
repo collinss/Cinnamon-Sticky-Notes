@@ -39,7 +39,7 @@
     
     "theme": {
         "type": "combobox",
-        "description": "Theme",
+        "description": "Default theme",
         "default": "yellow",
         "options": {
             "Mint": "mint",

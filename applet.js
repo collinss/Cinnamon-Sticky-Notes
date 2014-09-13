@@ -25,6 +25,18 @@ const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
 
+const THEMES = {
+    "mint": "Mint",
+    "mintx": "Mint-X",
+    "yellow": "Yellow",
+    "red": "Red",
+    "blue": "Blue",
+    "green": "Green",
+    "purple": "Purple",
+    "orange": "Orange",
+    "sticky": "Camouflage (tries to blend in)"
+}
+
 
 let applet;
 
@@ -222,7 +234,9 @@ Note.prototype = {
             this._dragging = false;
             this._dragOffset = [0, 0];
             
-            this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: settings.theme + "-noteBox", height: settings.height, width: settings.width });
+            if ( info && info.theme ) this.theme = info.theme;
+            else this.theme = settings.theme;
+            this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: settings.height, width: settings.width });
             this.actor._delegate = this;
             
             this.scrollBox = new St.ScrollView();
@@ -287,6 +301,17 @@ Note.prototype = {
     },
     
     buildMenu: function() {
+        let themeSection = new PopupMenu.PopupSubMenuMenuItem(_("Change theme"));
+        this.menu.addMenuItem(themeSection);
+        
+        for ( let codeName in THEMES ) {
+            let themeItem = new PopupMenu.PopupMenuItem(THEMES[codeName]);
+            themeSection.menu.addMenuItem(themeItem);
+            themeItem.connect("activate", Lang.bind(this, this.setTheme, codeName));
+        }
+        
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
         let copy = new PopupMenu.PopupMenuItem("Copy");
         this.menu.addMenuItem(copy);
         copy.connect("activate", Lang.bind(this, this.copy));
@@ -335,6 +360,12 @@ Note.prototype = {
         let width = sNode.adjust_for_width(this.actor.width);
         alloc.min_size = width - sbWidth;
         alloc.natural_size = width - sbWidth;
+    },
+    
+    setTheme: function(a, b, c, codeName) {
+        this.theme = codeName;
+        this.actor.style_class = codeName + "-noteBox";
+        this.emit("changed");
     },
     
     _onDragBegin: function() {
@@ -502,7 +533,7 @@ Note.prototype = {
     },
     
     getInfo: function() {
-        return { text: this.textBox.text, x: this.actor.x, y: this.actor.y };
+        return { text: this.textBox.text, x: this.actor.x, y: this.actor.y, theme: this.theme };
     },
     
     copy: function() {
