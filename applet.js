@@ -177,7 +177,7 @@ SettingsManager.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "raisedState", "raisedState");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "collapsed", "collapsed", function() { this.emit("collapsed-changed"); });
-            this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme", function() { this.emit("theme-changed"); });
+            this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme");
             this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
@@ -272,9 +272,6 @@ Note.prototype = {
             this.text.connect("key-focus-in", Lang.bind(this, this.onTextFocused));
             this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
             this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-            settings.connect("theme-changed", Lang.bind(this, function() {
-                this.actor.style_class = settings.theme + "-noteBox";
-            }));
             settings.connect("height-changed", Lang.bind(this, function() {
                 this.actor.height = settings.height;
                 this.actor.que_relayout();
