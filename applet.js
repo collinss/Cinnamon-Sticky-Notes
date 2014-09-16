@@ -38,7 +38,39 @@ const THEMES = {
 }
 
 
-let applet;
+let applet, noteBox, componentManager;
+
+
+function ComponentManager() {
+    this._init();
+}
+
+ComponentManager.prototype = {
+    _init: function() {
+        this.actors = [];
+    },
+    
+    addActor: function(actor) {
+        this.actors.push(actor);
+    },
+    
+    removeActor: function(actor) {
+        for ( let i = 0; i < this.actors.length; i++ ) {
+            if ( this.actors[i] == actor ) {
+                this.actors.splice(i, 1);
+                return;
+            }
+        }
+    },
+    
+    hasActor: function(actor) {
+        for ( let i = 0; i < this.actors.length; i++ ) {
+            if ( this.actors[i] == actor || this.actors[i].contains(actor) ) return true;
+        }
+        
+        return false;
+    }
+}
 
 
 function AboutDialog(metadata) {
@@ -195,6 +227,28 @@ SettingsManager.prototype = {
 Signals.addSignalMethods(SettingsManager.prototype);
 
 
+function MenuManager(owner) {
+    this._init(owner);
+}
+
+MenuManager.prototype = {
+    __proto__: PopupMenu.PopupMenuManager.prototype,
+    
+    _init: function(owner) {
+        PopupMenu.PopupMenuManager.prototype._init.call(this, owner);
+    },
+    
+    _shouldBlockEvent: function(event) {
+        //this function was overridden due to it causing problems when the menu didn't have the focus
+        return false;
+    },
+
+    _activeMenuContains: function(actor) {
+        return componentManager.hasActor(actor);
+    }
+}
+
+
 function PanelButton(parent, iconPath, tooltipText, command) {
     this._init(parent, iconPath, tooltipText, command);
 }
@@ -217,7 +271,6 @@ PanelButton.prototype = {
     },
     
     activate: function() {
-        if ( this.parent.menu ) this.parent.menu.close();
         this.command();
     }
 }
@@ -238,6 +291,7 @@ Note.prototype = {
             else this.theme = settings.theme;
             this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: settings.height, width: settings.width });
             this.actor._delegate = this;
+            componentManager.addActor(this.actor);
             
             this.scrollBox = new St.ScrollView();
             this.actor.add_actor(this.scrollBox);
@@ -288,6 +342,7 @@ Note.prototype = {
             this.menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.LEFT, 0);
             this.menuManager.addMenu(this.menu);
             Main.uiGroup.add_actor(this.menu.actor);
+            componentManager.addActor(this.menu.actor);
             this.menu.actor.hide();
             
             this.buildMenu();
@@ -386,6 +441,8 @@ Note.prototype = {
     },
     
     destroy: function(){
+        componentManager.removeActor(this.actor);
+        componentManager.removeActor(this.menu.actor);
         Tweener.addTween(this.actor, {
             opacity: 0,
             transition: "linear",
@@ -568,6 +625,7 @@ NoteBox.prototype = {
         this.actor = new Clutter.Group();
         Main.uiGroup.add_actor(this.actor);
         this.actor._delegate = this;
+        componentManager.addActor(this.actor);
         if ( settings.startState == 2 || ( settings.startState == 3 && settings.hideState ) ) {
             this.hideNotes();
             this.actor.hide();
@@ -729,12 +787,7 @@ NoteBox.prototype = {
             
             let target = event.get_source();
             
-            for ( let i = 0; i < this.notes.length; i++ ) {
-                if ( this.notes[i].actor == target ||
-                     this.notes[i].actor.contains(target) ||
-                     this.notes[i].menu.actor == target ||
-                     this.notes[i].menu.actor.contains(target) ) return false;
-            }
+            if ( componentManager.hasActor(target) ) return false;
             
             let type = event.type();
             if ( type == Clutter.EventType.BUTTON_PRESS ) return true;
@@ -929,16 +982,20 @@ MyApplet.prototype = {
             
             Applet.Applet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
             
+            componentManager = new ComponentManager();
+            componentManager.addActor(this.actor);
+            
             this.contextToggleCollapse = this._applet_context_menu.addAction("Collapse", Lang.bind(this, function() {
                 settings.collapsed = !settings.collapsed;
                 this.buildPanel();
             }));
             this._applet_context_menu.addMenuItem(new Applet.MenuItem(_("About..."), "dialog-question", Lang.bind(this, this.openAbout)));
             
-            this.menuManager = new PopupMenu.PopupMenuManager(this);
+            this.menuManager = new MenuManager(this);
             
-            this.noteBox = new NoteBox();
-            this.noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
+            noteBox = new NoteBox();
+            noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
+            
             this.buildPanel();
             
             settings.connect("collapsed-changed", Lang.bind(this, this.buildPanel));
@@ -949,7 +1006,7 @@ MyApplet.prototype = {
     },
     
     on_applet_removed_from_panel: function() {
-        this.noteBox.destroy();
+        noteBox.destroy();
     },
     
     openAbout: function() {
@@ -961,6 +1018,7 @@ MyApplet.prototype = {
         else this.buildButtons();
         this.actor.destroy_all_children();
         if ( this.menu ) {
+            componentManager.removeActor(this.menu.actor);
             this.menu.destroy();
             this.menu = null;
         }
@@ -991,10 +1049,15 @@ MyApplet.prototype = {
             
             this.menu = new Applet.AppletPopupMenu(this, this.orientation);
             this.menuManager.addMenu(this.menu);
+            componentManager.addActor(this.menu.actor);
             buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
             this.menu.addActor(buttonBin);
             
-            appletIcon.connect("button-press-event", Lang.bind(this, function() { this.menu.toggle(); }));
+            appletIcon.connect("button-press-event", Lang.bind(this, function() {
+                this.menu.toggle();
+                if ( this.menu.isOpen ) noteBox.raiseNotes();
+                else noteBox.lowerNotes();
+            }));
             
             this.contextToggleCollapse.label.text = "Expand";
         }
@@ -1015,31 +1078,33 @@ MyApplet.prototype = {
         this.newNote = new PanelButton(this,
                                        this.metadata.path+"/icons/add-symbolic.svg",
                                        "New",
-                                       Lang.bind(this.noteBox, this.noteBox.newNote));
+                                       Lang.bind(noteBox, noteBox.newNote));
         this.buttonBox.add_actor(this.newNote.actor);
         
-        this.raiseNotes = new PanelButton(this,
-                                          this.metadata.path+"/icons/raise-symbolic.svg",
-                                          "Raise",
-                                          Lang.bind(this.noteBox, this.noteBox.raiseNotes));
-        this.buttonBox.add_actor(this.raiseNotes.actor);
-        
-        this.lowerNotes = new PanelButton(this,
-                                          this.metadata.path+"/icons/lower-symbolic.svg",
-                                          "Lower",
-                                          Lang.bind(this.noteBox, this.noteBox.lowerNotes));
-        this.buttonBox.add_actor(this.lowerNotes.actor);
+        if ( !settings.collapsed ) {
+            this.raiseNotes = new PanelButton(this,
+                                              this.metadata.path+"/icons/raise-symbolic.svg",
+                                              "Raise",
+                                              Lang.bind(noteBox, noteBox.raiseNotes));
+            this.buttonBox.add_actor(this.raiseNotes.actor);
+            
+            this.lowerNotes = new PanelButton(this,
+                                              this.metadata.path+"/icons/lower-symbolic.svg",
+                                              "Lower",
+                                              Lang.bind(noteBox, noteBox.lowerNotes));
+            this.buttonBox.add_actor(this.lowerNotes.actor);
+        }
         
         this.showNotes = new PanelButton(this,
                                          this.metadata.path+"/icons/show-symbolic.svg",
                                          "Show",
-                                         Lang.bind(this.noteBox, this.noteBox.lowerNotes));
+                                         Lang.bind(noteBox, noteBox.lowerNotes));
         this.buttonBox.add_actor(this.showNotes.actor);
         
         this.hideNotes = new PanelButton(this,
                                          this.metadata.path+"/icons/hide-symbolic.svg",
                                          "Hide",
-                                         Lang.bind(this.noteBox, this.noteBox.hideNotes));
+                                         Lang.bind(noteBox, noteBox.hideNotes));
         this.buttonBox.add_actor(this.hideNotes.actor);
         
         this.setVisibleButtons();
@@ -1049,20 +1114,26 @@ MyApplet.prototype = {
         if ( settings.raisedState ) {
             this.showNotes.actor.hide();
             this.hideNotes.actor.show();
-            this.raiseNotes.actor.hide();
-            this.lowerNotes.actor.show();
+            if ( !settings.collapsed ) {
+                this.raiseNotes.actor.hide();
+                this.lowerNotes.actor.show();
+            }
         }
         else if ( settings.hideState ) {
             this.showNotes.actor.show();
             this.hideNotes.actor.hide();
-            this.raiseNotes.actor.show();
-            this.lowerNotes.actor.hide();
+            if ( !settings.collapsed ) {
+                this.raiseNotes.actor.show();
+                this.lowerNotes.actor.hide();
+            }
         }
         else {
             this.showNotes.actor.hide();
             this.hideNotes.actor.show();
-            this.raiseNotes.actor.show();
-            this.lowerNotes.actor.hide();
+            if ( !settings.collapsed ) {
+                this.raiseNotes.actor.show();
+                this.lowerNotes.actor.hide();
+            }
         }
     }
 }
