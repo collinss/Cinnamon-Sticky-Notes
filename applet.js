@@ -621,6 +621,8 @@ NoteBox.prototype = {
         this.last_x = -1;
         this.last_y = -1;
         this.mouseTrackEnabled = false;
+        this.isModal = false;
+        this.stageEventIds = [];
         
         this.actor = new Clutter.Group();
         Main.uiGroup.add_actor(this.actor);
@@ -764,20 +766,18 @@ NoteBox.prototype = {
     setModal: function() {
         if ( this.isModal ) return;
         
-        this.stageEventIds = [];
         this.stageEventIds.push(global.stage.connect("captured-event", Lang.bind(this, this.handleStageEvent)));
         this.stageEventIds.push(global.stage.connect("enter-event", Lang.bind(this, this.handleStageEvent)));
         this.stageEventIds.push(global.stage.connect("leave-event", Lang.bind(this, this.handleStageEvent)));
         
-        Main.pushModal(this.actor);
-        this.isModal = true;
+        if ( Main.pushModal(this.actor) ) this.isModal = true;
     },
     
     unsetModal: function() {
         if ( !this.isModal ) return;
         
         for ( let i = 0; i < this.stageEventIds.length; i++ ) global.stage.disconnect(this.stageEventIds[i]);
-        this.stageEventIds = null;
+        this.stageEventIds = [];
         Main.popModal(this.actor);
         this.isModal = false;
     },
