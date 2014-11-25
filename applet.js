@@ -694,6 +694,9 @@ NoteBox.prototype = {
                 break;
             }
         }
+        if ( this.notes.length == 0 && settings.raisedState ) {
+            this.lowerNotes();
+        }
         this.update();
     },
     
@@ -991,7 +994,7 @@ MyApplet.prototype = {
             }));
             this._applet_context_menu.addMenuItem(new Applet.MenuItem(_("About..."), "dialog-question", Lang.bind(this, this.openAbout)));
             
-            this.menuManager = new MenuManager(this);
+            this.notesMenuManager = new MenuManager(this);
             
             noteBox = new NoteBox();
             noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
@@ -1006,6 +1009,7 @@ MyApplet.prototype = {
     },
     
     on_applet_removed_from_panel: function() {
+        if ( settings.raisedState ) noteBox.lowerNotes();
         noteBox.destroy();
     },
     
@@ -1048,15 +1052,17 @@ MyApplet.prototype = {
             this.actor.add_actor(appletIcon);
             
             this.menu = new Applet.AppletPopupMenu(this, this.orientation);
-            this.menuManager.addMenu(this.menu);
+            this.notesMenuManager.addMenu(this.menu);
             componentManager.addActor(this.menu.actor);
             buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
             this.menu.addActor(buttonBin);
             
-            appletIcon.connect("button-press-event", Lang.bind(this, function() {
-                this.menu.toggle();
-                if ( this.menu.isOpen ) noteBox.raiseNotes();
-                else noteBox.lowerNotes();
+            appletIcon.connect("button-press-event", Lang.bind(this, function(a, event) {
+                if ( event.get_button() == 1 ) {
+                    this.menu.toggle();
+                    if ( this.menu.isOpen ) noteBox.raiseNotes();
+                    else noteBox.lowerNotes();
+                }
             }));
             
             this.contextToggleCollapse.label.text = "Expand";

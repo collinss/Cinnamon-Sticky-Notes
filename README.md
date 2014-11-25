@@ -4,9 +4,9 @@ Known Issues
 
 Before Release
 --------------
-    Allow persistent menu?
 
 Adressed
 --------
     Allow separate theme for each note
+    Allow persistent menu
     
