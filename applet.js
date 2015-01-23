@@ -208,7 +208,6 @@ SettingsManager.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "storedNotes", "storedNotes");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "raisedState", "raisedState");
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
-            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "collapsed", "collapsed", function() { this.emit("collapsed-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme");
             this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
             this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
@@ -973,7 +972,7 @@ function MyApplet(metadata, orientation, panelHeight, instanceId) {
 }
 
 MyApplet.prototype = {
-    __proto__: Applet.Applet.prototype,
+    __proto__: Applet.IconApplet.prototype,
     
     _init: function(metadata, orientation, panelHeight, instanceId) {
         try {
@@ -983,15 +982,13 @@ MyApplet.prototype = {
             this.instanceId = instanceId;
             this.orientation = orientation;
             
-            Applet.Applet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
+            Applet.IconApplet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
             
             componentManager = new ComponentManager();
             componentManager.addActor(this.actor);
             
-            this.contextToggleCollapse = this._applet_context_menu.addAction("Collapse", Lang.bind(this, function() {
-                settings.collapsed = !settings.collapsed;
-                this.buildPanel();
-            }));
+            this.set_applet_icon_symbolic_path(this.metadata.path+"/icons/sticky-symbolic.svg");
+            
             this._applet_context_menu.addMenuItem(new Applet.MenuItem(_("About..."), "dialog-question", Lang.bind(this, this.openAbout)));
             
             this.notesMenuManager = new MenuManager(this);
@@ -999,13 +996,21 @@ MyApplet.prototype = {
             noteBox = new NoteBox();
             noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
             
-            this.buildPanel();
+            this.menu = new Applet.AppletPopupMenu(this, this.orientation);
+            this.notesMenuManager.addMenu(this.menu);
+            componentManager.addActor(this.menu.actor);
             
-            settings.connect("collapsed-changed", Lang.bind(this, this.buildPanel));
+            this.buildMenu();
             
         } catch(e) {
             global.logError(e);
         }
+    },
+    
+    on_applet_clicked: function() {
+        this.menu.toggle();
+        if ( this.menu.isOpen ) noteBox.raiseNotes();
+        else noteBox.lowerNotes();
     },
     
     on_applet_removed_from_panel: function() {
@@ -1017,89 +1022,17 @@ MyApplet.prototype = {
         new AboutDialog(this.metadata);
     },
     
-    buildPanel: function() {
-        if ( this.buttonBox ) this.buttonBox.get_parent().remove_actor(this.buttonBox);
-        else this.buildButtons();
-        this.actor.destroy_all_children();
-        if ( this.menu ) {
-            componentManager.removeActor(this.menu.actor);
-            this.menu.destroy();
-            this.menu = null;
-        }
-        
-        let buttonBin;
-        if ( settings.collapsed ) {
-            this.actor.set_track_hover(true);
-            let file = Gio.file_new_for_path(this.metadata.path+"/icons/sticky-symbolic.svg");
-            let gicon = new Gio.FileIcon({ file: file });
-            let appletIcon;
-            if ( this._scaleMode ) {
-                appletIcon = new St.Icon({ gicon: gicon,
-                                           icon_size: this._panelHeight * .525,
-                                           icon_type: St.IconType.SYMBOLIC,
-                                           reactive: true,
-                                           track_hover: true,
-                                           style_class: "applet-icon" });
-            }
-            else {
-                appletIcon = new St.Icon({ gicon: gicon,
-                                           icon_size: 16,
-                                           icon_type: St.IconType.SYMBOLIC,
-                                           reactive: true,
-                                           track_hover: true,
-                                           style_class: "applet-icon" });
-            }
-            this.actor.add_actor(appletIcon);
-            
-            this.menu = new Applet.AppletPopupMenu(this, this.orientation);
-            this.notesMenuManager.addMenu(this.menu);
-            componentManager.addActor(this.menu.actor);
-            buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
-            this.menu.addActor(buttonBin);
-            
-            appletIcon.connect("button-press-event", Lang.bind(this, function(a, event) {
-                if ( event.get_button() == 1 ) {
-                    this.menu.toggle();
-                    if ( this.menu.isOpen ) noteBox.raiseNotes();
-                    else noteBox.lowerNotes();
-                }
-            }));
-            
-            this.contextToggleCollapse.label.text = "Expand";
-        }
-        else {
-            this.actor.set_track_hover(false);
-            buttonBin = new St.Bin({ style_class: "sticky-panelBox" });
-            this.actor.add_actor(buttonBin);
-            
-            this.contextToggleCollapse.label.text = "Collapse";
-        }
-        
-        buttonBin.set_child(this.buttonBox);
-    },
-    
-    buildButtons: function() {
+    buildMenu: function() {
+        let buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
+        this.menu.addActor(buttonBin);
         this.buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
+        buttonBin.set_child(this.buttonBox);
         
         this.newNote = new PanelButton(this,
                                        this.metadata.path+"/icons/add-symbolic.svg",
                                        "New",
                                        Lang.bind(noteBox, noteBox.newNote));
         this.buttonBox.add_actor(this.newNote.actor);
-        
-        if ( !settings.collapsed ) {
-            this.raiseNotes = new PanelButton(this,
-                                              this.metadata.path+"/icons/raise-symbolic.svg",
-                                              "Raise",
-                                              Lang.bind(noteBox, noteBox.raiseNotes));
-            this.buttonBox.add_actor(this.raiseNotes.actor);
-            
-            this.lowerNotes = new PanelButton(this,
-                                              this.metadata.path+"/icons/lower-symbolic.svg",
-                                              "Lower",
-                                              Lang.bind(noteBox, noteBox.lowerNotes));
-            this.buttonBox.add_actor(this.lowerNotes.actor);
-        }
         
         this.showNotes = new PanelButton(this,
                                          this.metadata.path+"/icons/show-symbolic.svg",
@@ -1120,26 +1053,14 @@ MyApplet.prototype = {
         if ( settings.raisedState ) {
             this.showNotes.actor.hide();
             this.hideNotes.actor.show();
-            if ( !settings.collapsed ) {
-                this.raiseNotes.actor.hide();
-                this.lowerNotes.actor.show();
-            }
         }
         else if ( settings.hideState ) {
             this.showNotes.actor.show();
             this.hideNotes.actor.hide();
-            if ( !settings.collapsed ) {
-                this.raiseNotes.actor.show();
-                this.lowerNotes.actor.hide();
-            }
         }
         else {
             this.showNotes.actor.hide();
             this.hideNotes.actor.show();
-            if ( !settings.collapsed ) {
-                this.raiseNotes.actor.show();
-                this.lowerNotes.actor.hide();
-            }
         }
     }
 }

@@ -54,12 +54,6 @@
         }
     },
     
-    "collapsed": {
-        "type": "checkbox",
-        "description": "Panel Collapsed",
-        "default": "false"
-    },
-    
     "behaviorHeader": {
         "type": "header",
         "description": "Behavior"
