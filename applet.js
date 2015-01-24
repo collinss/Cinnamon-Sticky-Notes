@@ -126,33 +126,6 @@ MenuManager.prototype = {
 }
 
 
-function PanelButton(parent, iconPath, tooltipText, command) {
-    this._init(parent, iconPath, tooltipText, command);
-}
-
-PanelButton.prototype = {
-    _init: function(parent, iconPath, tooltipText, command) {
-        this.parent = parent;
-        this.command = command;
-        
-        this.actor = new St.Button({ style_class: "sticky-panelButton" });
-        
-        let file = Gio.file_new_for_path(iconPath);
-        let gicon = new Gio.FileIcon({ file: file });
-        let icon = new St.Icon({ gicon: gicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
-        this.actor.add_actor(icon);
-        
-        this.actor.connect("clicked", Lang.bind(this, this.activate));
-        
-        let tooltip = new Tooltips.Tooltip(this.actor, tooltipText)
-    },
-    
-    activate: function() {
-        this.command();
-    }
-}
-
-
 function Note(info) {
     this._init(info);
 }
@@ -870,7 +843,6 @@ MyApplet.prototype = {
             this.notesMenuManager = new MenuManager(this);
             
             noteBox = new NoteBox();
-            noteBox.connect("state-changed", Lang.bind(this, this.setVisibleButtons));
             
             this.menu = new Applet.AppletPopupMenu(this, this.orientation);
             this.notesMenuManager.addMenu(this.menu);
@@ -897,43 +869,24 @@ MyApplet.prototype = {
     buildMenu: function() {
         let buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
         this.menu.addActor(buttonBin);
-        this.buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
-        buttonBin.set_child(this.buttonBox);
+        let buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
+        buttonBin.set_child(buttonBox);
         
-        this.newNote = new PanelButton(this,
-                                       this.metadata.path+"/icons/add-symbolic.svg",
-                                       "New",
-                                       Lang.bind(noteBox, noteBox.newNote));
-        this.buttonBox.add_actor(this.newNote.actor);
+        let newNoteButton = new St.Button({ style_class: "sticky-button" });
+        buttonBox.add_actor(newNoteButton);
+        let newNoteFile = Gio.file_new_for_path(this.metadata.path+"/icons/add-symbolic.svg");
+        let newNoteGicon = new Gio.FileIcon({ file: newNoteFile });
+        let newNoteIcon = new St.Icon({ gicon: newNoteGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        newNoteButton.add_actor(newNoteIcon);
+        newNoteButton.connect("clicked", Lang.bind(noteBox, noteBox.newNote));
         
-        this.showNotes = new PanelButton(this,
-                                         this.metadata.path+"/icons/show-symbolic.svg",
-                                         "Show",
-                                         Lang.bind(noteBox, noteBox.lowerNotes));
-        this.buttonBox.add_actor(this.showNotes.actor);
-        
-        this.hideNotes = new PanelButton(this,
-                                         this.metadata.path+"/icons/hide-symbolic.svg",
-                                         "Hide",
-                                         Lang.bind(noteBox, noteBox.hideNotes));
-        this.buttonBox.add_actor(this.hideNotes.actor);
-        
-        this.setVisibleButtons();
-    },
-    
-    setVisibleButtons: function() {
-        if ( settings.raisedState ) {
-            this.showNotes.actor.hide();
-            this.hideNotes.actor.show();
-        }
-        else if ( settings.hideState ) {
-            this.showNotes.actor.show();
-            this.hideNotes.actor.hide();
-        }
-        else {
-            this.showNotes.actor.hide();
-            this.hideNotes.actor.show();
-        }
+        let hideNotesButton = new St.Button({ style_class: "sticky-button" });
+        buttonBox.add_actor(hideNotesButton);
+        let hideNotesFile = Gio.file_new_for_path(this.metadata.path+"/icons/hide-symbolic.svg");
+        let hideNotesGicon = new Gio.FileIcon({ file: hideNotesFile });
+        let hideNotesIcon = new St.Icon({ gicon: hideNotesGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        hideNotesButton.add_actor(hideNotesIcon);
+        hideNotesButton.connect("clicked", Lang.bind(noteBox, noteBox.hideNotes));
     }
 }
 
