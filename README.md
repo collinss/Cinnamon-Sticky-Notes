@@ -17,3 +17,4 @@ Adressed
     Remove about dialog for 2.4 compatibility
     Remove show button and change icon for hide
     Change themes to match new Mint-x colors
+    Allow themes to be chosen at random on note creation

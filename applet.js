@@ -139,7 +139,14 @@ Note.prototype = {
             this._dragOffset = [0, 0];
             
             if ( info && info.theme ) this.theme = info.theme;
-            else this.theme = settings.theme;
+            else {
+                if ( settings.theme == "random" ) {
+                    let keys = Object.keys(THEMES);
+                    this.theme = keys[Math.floor(Math.random()*keys.length)];
+                }
+                else this.theme = settings.theme;
+            }
+            
             this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: settings.height, width: settings.width });
             this.actor._delegate = this;
             componentManager.addActor(this.actor);
