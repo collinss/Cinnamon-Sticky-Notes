@@ -1,13 +1,17 @@
 Known Issues
 ------------
+    Occasional 'stuck' note
 
 Wanted Features
 ---------------
     Bulleted lists
     Select font
+    Close button
+    Drag-to-resize
 
 Before Release
 --------------
+    Switch to better text handling
 
 Adressed
 --------
