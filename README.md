@@ -22,3 +22,4 @@ Adressed
     Remove show button and change icon for hide
     Change themes to match new Mint-x colors
     Allow themes to be chosen at random on note creation
+    Fix occasional Cinnamon crash on destroy note

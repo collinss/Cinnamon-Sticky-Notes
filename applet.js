@@ -306,6 +306,7 @@ Note.prototype = {
             transition: "linear",
             time: DESTROY_TIME,
             onComplete: Lang.bind(this, function() {
+                this.unfocusText();
                 this.actor.destroy();
             })
         });
