@@ -40,17 +40,18 @@
     "theme": {
         "type": "combobox",
         "description": "Default theme",
-        "default": "yellow",
+        "default": "green",
         "options": {
-            "Mint": "mint",
-            "Mint-X": "mintx",
-            "Yellow": "yellow",
-            "Red": "red",
-            "Blue": "blue",
-            "Green": "green",
-            "Purple": "purple",
-            "Orange": "orange",
-            "Camouflage (tries to blend in)": "sticky"
+            "Mint-X-Green": "green",
+            "Mint-X-Aqua": "aqua",
+            "Mint-X-Blue": "blue",
+            "Mint-X-Brown": "brown",
+            "Mint-X-Orange": "orange",
+            "Mint-X-Pink": "pink",
+            "Mint-X-Purple": "purple",
+            "Mint-X-Red": "red",
+            "Mint-X-Sand": "sand",
+            "Mint-X-Teal": "teal"
         }
     },
     

@@ -26,15 +26,16 @@ const DESTROY_TIME = 0.5;
 const PADDING = 10;
 
 const THEMES = {
-    "mint": "Mint",
-    "mintx": "Mint-X",
-    "yellow": "Yellow",
-    "red": "Red",
-    "blue": "Blue",
-    "green": "Green",
-    "purple": "Purple",
-    "orange": "Orange",
-    "sticky": "Camouflage (tries to blend in)"
+    "green": "Mint-X-Green",
+    "aqua": "Mint-X-Aqua",
+    "blue": "Mint-X-Blue",
+    "brown": "Mint-X-Brown",
+    "orange": "Mint-X-Orange",
+    "pink": "Mint-X-Pink",
+    "purple": "Mint-X-Purple",
+    "red": "Mint-X-Red",
+    "sand": "Mint-X-Sand",
+    "teal": "Mint-X-Teal"
 }
 
 
