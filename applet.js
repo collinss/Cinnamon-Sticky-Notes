@@ -151,6 +151,14 @@ Note.prototype = {
             this.actor._delegate = this;
             componentManager.addActor(this.actor);
             
+            this.titleBox = new St.Bin({ x_align: St.Align.START, style_class: "sticky-titleBox" });
+            this.actor.add_actor(this.titleBox);
+            
+            if ( info && info.title ) {
+                this.title = info.title;
+                this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
+            }
+            
             this.scrollBox = new St.ScrollView();
             this.actor.add_actor(this.scrollBox);
             this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
@@ -219,6 +227,10 @@ Note.prototype = {
             themeSection.menu.addMenuItem(themeItem);
             themeItem.connect("activate", Lang.bind(this, this.setTheme, codeName));
         }
+        
+        this.titleMenuItem = new PopupMenu.PopupMenuItem(this.title ? "Edit title" : "Add title");
+        this.menu.addMenuItem(this.titleMenuItem);
+        this.titleMenuItem.connect("activate", Lang.bind(this, this.editTitle));
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
@@ -446,7 +458,9 @@ Note.prototype = {
     },
     
     getInfo: function() {
-        return { text: this.textBox.text, x: this.actor.x, y: this.actor.y, theme: this.theme };
+        let info = { text: this.textBox.text, x: this.actor.x, y: this.actor.y, theme: this.theme };
+        if ( this.title ) info.title = this.title;
+        return info;
     },
     
     copy: function() {
@@ -465,6 +479,50 @@ Note.prototype = {
             if ( cursor != selection ) this.text.delete_selection();
             this.text.insert_text(text, this.text.get_cursor_position());
         }));
+    },
+    
+    editTitle: function() {
+        this.titleBox.remove_all_children();
+        
+        let text;
+        if ( this.title ) text = this.title;
+        else text = "Title";
+        this.titleEntry = new St.Entry({ text: text, style_class: "sticky-title" });
+        this.titleBox.add_actor(this.titleEntry);
+        if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
+        global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+        this.titleEntry.grab_key_focus();
+        this.titleEntry.clutter_text.set_selection(0, -1);
+        
+        global.stage.connect("button-press-event", Lang.bind(this, function() { this.uneditTitle(true); }));
+        this.titleEntry.clutter_text.connect("key-press-event", Lang.bind(this, function(actor, event) {
+            switch ( event.get_key_symbol() ) {
+                case Clutter.KEY_Escape:
+                    this.uneditTitle(false);
+                    return true;
+                case Clutter.Return:
+                case Clutter.KP_Enter:
+                    this.uneditTitle(true);
+                    return true;
+                default:
+                    return false;
+            }
+        }));
+    },
+    
+    uneditTitle: function(update) {
+        if ( update ) {
+            if ( this.titleEntry.text == "" ) this.title = undefined;
+            else this.title = this.titleEntry.text;
+        }
+        
+        this.titleBox.remove_actor(this.titleEntry);
+        
+        if ( this.title ) {
+            this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
+            this.titleMenuItem.label.text = "Edit title";
+        }
+        else this.titleMenuItem.label.text = "Add title";
     }
 }
 Signals.addSignalMethods(Note.prototype);
