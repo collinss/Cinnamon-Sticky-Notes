@@ -503,6 +503,7 @@ Note.prototype = {
                 case Clutter.Return:
                 case Clutter.KP_Enter:
                     this.uneditTitle(true);
+                    this.emit("changed");
                     return true;
                 default:
                     return false;
