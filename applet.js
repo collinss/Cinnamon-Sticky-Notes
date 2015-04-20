@@ -644,6 +644,7 @@ NoteBox.prototype = {
             }
             
             settings.raisedState = true;
+            this.isPinned = false;
             this.checkMouseTracking();
             if ( settings.lowerOnClick ) {
                 this.setModal();
@@ -662,6 +663,7 @@ NoteBox.prototype = {
                 settings.hideState = false;
             }
             
+            this.isPinned = false;
             settings.raisedState = false;
             this.checkMouseTracking();
             
@@ -677,6 +679,7 @@ NoteBox.prototype = {
             this.actor.hide();
             settings.raisedState = false;
             settings.hideState = true;
+            this.isPinned = false;
             this.unsetModal();
             this.emit("state-changed");
         } catch(e) {
@@ -684,6 +687,21 @@ NoteBox.prototype = {
         }
     },
     
+    pinNotes: function() {
+        this.actor.raise_top();
+        this.checkMouseTracking();
+        settings.raisedState = false;
+        settings.hideState = true;
+        this.isPinned = true;
+        this.unsetModal();
+        this.emit("state-changed");
+    },
+    
+    togglePin: function() {
+        if ( !this.isPinned ) this.pinNotes();
+        else this.raiseNotes();
+    },
+
     setModal: function() {
         if ( this.isModal ) return;
         
@@ -705,7 +723,8 @@ NoteBox.prototype = {
     
     handleStageEvent: function(actor, event) {
         try {
-            
+            if ( this.isPinned ) return false;
+
             let target = event.get_source();
             
             if ( componentManager.hasActor(target) ) return false;
@@ -947,6 +966,17 @@ MyApplet.prototype = {
         let newNoteIcon = new St.Icon({ gicon: newNoteGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
         newNoteButton.add_actor(newNoteIcon);
         newNoteButton.connect("clicked", Lang.bind(noteBox, noteBox.newNote));
+        
+        let pinNotesButton = new St.Button({ style_class: "sticky-button" });
+        buttonBox.add_actor(pinNotesButton);
+        let pinNotesFile = Gio.file_new_for_path(this.metadata.path+"/icons/pin-symbolic.svg");
+        let pinNotesGicon = new Gio.FileIcon({ file: pinNotesFile });
+        let pinNotesIcon = new St.Icon({ gicon: pinNotesGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        pinNotesButton.add_actor(pinNotesIcon);
+        pinNotesButton.connect("clicked", Lang.bind(noteBox, function() {
+            if ( !this.isPinned ) this.pinNotes();
+            else this.raiseNotes();
+        }));
         
         let hideNotesButton = new St.Button({ style_class: "sticky-button" });
         buttonBox.add_actor(hideNotesButton);
