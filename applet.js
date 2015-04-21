@@ -673,7 +673,7 @@ NoteBox.prototype = {
     initializeNotes: function() {
         try {
             for ( let i = 0; i < settings.storedNotes.length; i++ ) {
-                this.addNote(settings.storedNotes[i]);
+                this.addNote("note",settings.storedNotes[i]);
             }
         } catch(e) {
             global.logError(e);
