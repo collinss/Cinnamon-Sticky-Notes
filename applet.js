@@ -24,6 +24,7 @@ const Util = imports.misc.util;
 const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
+const ICON_SIZE = 24;
 
 const THEMES = {
     "green": "Mint-X-Green",
@@ -1007,7 +1008,7 @@ MyApplet.prototype = {
         buttonBox.add_actor(newNoteButton);
         let newNoteFile = Gio.file_new_for_path(this.metadata.path+"/icons/add-note-symbolic.svg");
         let newNoteGicon = new Gio.FileIcon({ file: newNoteFile });
-        let newNoteIcon = new St.Icon({ gicon: newNoteGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        let newNoteIcon = new St.Icon({ gicon: newNoteGicon, icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         newNoteButton.add_actor(newNoteIcon);
         newNoteButton.connect("clicked", Lang.bind(noteBox, noteBox.newNote));
         
@@ -1015,7 +1016,7 @@ MyApplet.prototype = {
         buttonBox.add_actor(newTaskButton);
         let newTaskFile = Gio.file_new_for_path(this.metadata.path+"/icons/add-task-symbolic.svg");
         let newTaskGicon = new Gio.FileIcon({ file: newTaskFile });
-        let newTaskIcon = new St.Icon({ gicon: newTaskGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        let newTaskIcon = new St.Icon({ gicon: newTaskGicon, icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         newTaskButton.add_actor(newTaskIcon);
         newTaskButton.connect("clicked", Lang.bind(noteBox, noteBox.newTask));
         
@@ -1023,7 +1024,7 @@ MyApplet.prototype = {
         buttonBox.add_actor(pinNotesButton);
         let pinNotesFile = Gio.file_new_for_path(this.metadata.path+"/icons/pin-symbolic.svg");
         let pinNotesGicon = new Gio.FileIcon({ file: pinNotesFile });
-        let pinNotesIcon = new St.Icon({ gicon: pinNotesGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        let pinNotesIcon = new St.Icon({ gicon: pinNotesGicon, icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         pinNotesButton.add_actor(pinNotesIcon);
         pinNotesButton.connect("clicked", Lang.bind(noteBox, function() {
             if ( !this.isPinned ) this.pinNotes();
@@ -1034,7 +1035,7 @@ MyApplet.prototype = {
         buttonBox.add_actor(hideNotesButton);
         let hideNotesFile = Gio.file_new_for_path(this.metadata.path+"/icons/hide-symbolic.svg");
         let hideNotesGicon = new Gio.FileIcon({ file: hideNotesFile });
-        let hideNotesIcon = new St.Icon({ gicon: hideNotesGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        let hideNotesIcon = new St.Icon({ gicon: hideNotesGicon, icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         hideNotesButton.add_actor(hideNotesIcon);
         hideNotesButton.connect("clicked", Lang.bind(noteBox, noteBox.hideNotes));
     }
