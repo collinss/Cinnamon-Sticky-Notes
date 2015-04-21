@@ -1001,7 +1001,7 @@ MyApplet.prototype = {
     buildMenu: function() {
         let buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
         this.menu.addActor(buttonBin);
-        let buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
+        let buttonBox = new St.BoxLayout({ vertical: true, style_class: "sticky-buttonBox" });
         buttonBin.set_child(buttonBox);
         
         let newNoteButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
