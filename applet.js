@@ -1004,19 +1004,19 @@ MyApplet.prototype = {
         let buttonBox = new St.BoxLayout({ style_class: "sticky-buttonBox" });
         buttonBin.set_child(buttonBox);
         
-        let newNoteButton = new St.Button({ style_class: "sticky-button" });
+        let newNoteButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
         buttonBox.add_actor(newNoteButton);
         let newNoteIcon = new St.Icon({ icon_name: "add-note-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         newNoteButton.add_actor(newNoteIcon);
         newNoteButton.connect("clicked", Lang.bind(noteBox, noteBox.newNote));
         
-        let newTaskButton = new St.Button({ style_class: "sticky-button" });
+        let newTaskButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
         buttonBox.add_actor(newTaskButton);
         let newTaskIcon = new St.Icon({ icon_name: "add-task-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         newTaskButton.add_actor(newTaskIcon);
         newTaskButton.connect("clicked", Lang.bind(noteBox, noteBox.newTask));
         
-        let pinNotesButton = new St.Button({ style_class: "sticky-button" });
+        let pinNotesButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
         buttonBox.add_actor(pinNotesButton);
         let pinNotesIcon = new St.Icon({ icon_name: "pin-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         pinNotesButton.add_actor(pinNotesIcon);
@@ -1025,7 +1025,7 @@ MyApplet.prototype = {
             else this.raiseNotes();
         }));
         
-        let hideNotesButton = new St.Button({ style_class: "sticky-button" });
+        let hideNotesButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
         buttonBox.add_actor(hideNotesButton);
         let hideNotesIcon = new St.Icon({ icon_name: "hide-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
         hideNotesButton.add_actor(hideNotesIcon);
