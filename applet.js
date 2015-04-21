@@ -127,95 +127,54 @@ MenuManager.prototype = {
 }
 
 
-function Note(info) {
+function NoteBase(info) {
     this._init(info);
 }
 
-Note.prototype = {
+NoteBase.prototype = {
     _init: function(info) {
-        try {
-            
-            this._dragging = false;
-            this._dragOffset = [0, 0];
-            
-            if ( info && info.theme ) this.theme = info.theme;
-            else {
-                if ( settings.theme == "random" ) {
-                    let keys = Object.keys(THEMES);
-                    this.theme = keys[Math.floor(Math.random()*keys.length)];
-                }
-                else this.theme = settings.theme;
+        this._dragging = false;
+        this._dragOffset = [0, 0];
+        
+        if ( info && info.theme ) this.theme = info.theme;
+        else {
+            if ( settings.theme == "random" ) {
+                let keys = Object.keys(THEMES);
+                this.theme = keys[Math.floor(Math.random()*keys.length)];
             }
-            
-            this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: settings.height, width: settings.width });
-            this.actor._delegate = this;
-            componentManager.addActor(this.actor);
-            
-            this.titleBox = new St.Bin({ x_align: St.Align.START, style_class: "sticky-titleBox" });
-            this.actor.add_actor(this.titleBox);
-            
-            if ( info && info.title ) {
-                this.title = info.title;
-                this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
-            }
-            
-            this.scrollBox = new St.ScrollView();
-            this.actor.add_actor(this.scrollBox);
-            this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-            
-            this.textBin = new St.BoxLayout();
-            this.scrollBox.add_actor(this.textBin);
-            
-            this.textWrapper = new Cinnamon.GenericContainer();
-            this.textBin.add_actor(this.textWrapper);
-            
-            this.textBox = new St.Entry({  });
-            this.textWrapper.add_actor(this.textBox);
-            if ( info ) this.textBox.text = info.text;
-            
-            this.text = this.textBox.clutter_text;
-            this.text.set_single_line_mode(false);
-            this.text.set_activatable(false);
-            this.text.ellipsize = Pango.EllipsizeMode.NONE;
-            this.text.line_wrap = true;
-            this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
-            this.text.set_selectable(true);
-            
-            this.textWrapper.connect("allocate", Lang.bind(this, this.allocate));
-            this.textWrapper.connect("get-preferred-height", Lang.bind(this, this.getPreferedHeight));
-            this.textWrapper.connect("get-preferred-width", Lang.bind(this, this.getPreferedWidth));
-            this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
-            this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
-            this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-            this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
-            this.text.connect("cursor-event", Lang.bind(this, this.handleScrollPosition));
-            this.text.connect("key-focus-in", Lang.bind(this, this.onTextFocused));
-            this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
-            this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-            settings.connect("height-changed", Lang.bind(this, function() {
-                this.actor.height = settings.height;
-                this.actor.que_relayout();
-            }));
-            settings.connect("width-changed", Lang.bind(this, function() {
-                this.actor.width = settings.width;
-                this.actor.que_relayout();
-            }));
-            
-            let padding = new St.Bin({ reactive: true });
-            this.actor.add(padding, { y_expand: true, y_fill: true, x_expand: true, x_fill: true });
-            
-            this.menuManager = new PopupMenu.PopupMenuManager(this);
-            this.menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.LEFT, 0);
-            this.menuManager.addMenu(this.menu);
-            Main.uiGroup.add_actor(this.menu.actor);
-            componentManager.addActor(this.menu.actor);
-            this.menu.actor.hide();
-            
-            this.buildMenu();
-            
-        } catch(e) {
-            global.logError(e);
+            else this.theme = settings.theme;
         }
+        
+        this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: settings.height, width: settings.width });
+        this.actor._delegate = this;
+        componentManager.addActor(this.actor);
+        
+        this.titleBox = new St.Bin({ x_align: St.Align.START, style_class: "sticky-titleBox" });
+        this.actor.add_actor(this.titleBox);
+        
+        if ( info && info.title ) {
+            this.title = info.title;
+            this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
+        }
+
+        this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
+        this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+        this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+        settings.connect("height-changed", Lang.bind(this, function() {
+            this.actor.height = settings.height;
+            this.actor.que_relayout();
+        }));
+        settings.connect("width-changed", Lang.bind(this, function() {
+            this.actor.width = settings.width;
+            this.actor.que_relayout();
+        }));
+            
+        this.menuManager = new PopupMenu.PopupMenuManager(this);
+        this.menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.LEFT, 0);
+        this.menuManager.addMenu(this.menu);
+        Main.uiGroup.add_actor(this.menu.actor);
+        componentManager.addActor(this.menu.actor);
+        this.menu.actor.hide();
     },
     
     buildMenu: function() {
@@ -256,32 +215,6 @@ Note.prototype = {
             this.emit("destroy", this);
         }));
         this.menu.addMenuItem(remove);
-    },
-    
-    allocate: function(actor, box, flags) {
-        let childBox = new Clutter.ActorBox();
-        
-        childBox.x1 = box.x1;
-        childBox.x2 = box.x2;
-        childBox.y1 = box.y1;
-        childBox.y2 = box.y2;
-        this.textBox.allocate(childBox, flags);
-    },
-    
-    getPreferedHeight: function(actor, forWidth, alloc) {
-        let [minWidth, natWidth] = actor.get_preferred_width(0);
-        let [minHeight, natHeight] = this.text.get_preferred_height(natWidth);
-        
-        alloc.min_size = minHeight;
-        alloc.natural_size = natHeight;
-    },
-    
-    getPreferedWidth: function(actor, forHeight, alloc) {
-        let sbWidth = this.scrollBox.vscroll.width;
-        let sNode = this.actor.get_theme_node();
-        let width = sNode.adjust_for_width(this.actor.width);
-        alloc.min_size = width - sbWidth;
-        alloc.natural_size = width - sbWidth;
     },
     
     setTheme: function(a, b, c, codeName) {
@@ -326,6 +259,145 @@ Note.prototype = {
         
         this.menu = null;
         this.menuManager = null;
+    },
+    
+    trackMouse: function() {
+        if( !Main.layoutManager.isTrackingChrome(this.actor) ) {
+            Main.layoutManager.addChrome(this.actor, { doNotAdd: true });
+            this._isTracked = true;
+        }
+    },
+    
+    untrackMouse: function() {
+        if( Main.layoutManager.isTrackingChrome(this.actor) ) {
+            Main.layoutManager.untrackChrome(this.actor);
+            this._isTracked = false;
+        }
+    },
+    
+    editTitle: function() {
+        this.titleBox.remove_all_children();
+        
+        let text;
+        if ( this.title ) text = this.title;
+        else text = "Title";
+        this.titleEntry = new St.Entry({ text: text, style_class: "sticky-title" });
+        this.titleBox.add_actor(this.titleEntry);
+        if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
+        global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+        this.titleEntry.grab_key_focus();
+        this.titleEntry.clutter_text.set_selection(0, -1);
+        
+        global.stage.connect("button-press-event", Lang.bind(this, function() { this.uneditTitle(true); }));
+        this.titleEntry.clutter_text.connect("key-press-event", Lang.bind(this, function(actor, event) {
+            switch ( event.get_key_symbol() ) {
+                case Clutter.KEY_Escape:
+                    this.uneditTitle(false);
+                    return true;
+                case Clutter.Return:
+                case Clutter.KP_Enter:
+                    this.uneditTitle(true);
+                    this.emit("changed");
+                    return true;
+                default:
+                    return false;
+            }
+        }));
+    },
+    
+    uneditTitle: function(update) {
+        if ( update ) {
+            if ( this.titleEntry.text == "" ) this.title = undefined;
+            else this.title = this.titleEntry.text;
+        }
+        
+        this.titleBox.remove_actor(this.titleEntry);
+        
+        if ( this.title ) {
+            this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
+            this.titleMenuItem.label.text = "Edit title";
+        }
+        else this.titleMenuItem.label.text = "Add title";
+    }
+}
+
+
+function Note(info) {
+    this._init(info);
+}
+
+Note.prototype = {
+    __proto__: NoteBase.prototype,
+
+    _init: function(info) {
+        try {
+            NoteBase.prototype._init.call(this, info);
+
+            this.scrollBox = new St.ScrollView();
+            this.actor.add_actor(this.scrollBox);
+            this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+            
+            this.textBin = new St.BoxLayout();
+            this.scrollBox.add_actor(this.textBin);
+            
+            this.textWrapper = new Cinnamon.GenericContainer();
+            this.textBin.add_actor(this.textWrapper);
+            
+            this.textBox = new St.Entry({  });
+            this.textWrapper.add_actor(this.textBox);
+            if ( info ) this.textBox.text = info.text;
+            
+            this.text = this.textBox.clutter_text;
+            this.text.set_single_line_mode(false);
+            this.text.set_activatable(false);
+            this.text.ellipsize = Pango.EllipsizeMode.NONE;
+            this.text.line_wrap = true;
+            this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+            this.text.set_selectable(true);
+            
+            this.textWrapper.connect("allocate", Lang.bind(this, this.allocate));
+            this.textWrapper.connect("get-preferred-height", Lang.bind(this, this.getPreferedHeight));
+            this.textWrapper.connect("get-preferred-width", Lang.bind(this, this.getPreferedWidth));
+            this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+            this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+            this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
+            this.text.connect("cursor-event", Lang.bind(this, this.handleScrollPosition));
+            this.text.connect("key-focus-in", Lang.bind(this, this.onTextFocused));
+            
+            let padding = new St.Bin({ reactive: true });
+            this.actor.add(padding, { y_expand: true, y_fill: true, x_expand: true, x_fill: true });
+            
+            this.buildMenu();
+            
+        } catch(e) {
+            global.logError(e);
+        }
+    },
+    
+    allocate: function(actor, box, flags) {
+        let childBox = new Clutter.ActorBox();
+        
+        childBox.x1 = box.x1;
+        childBox.x2 = box.x2;
+        childBox.y1 = box.y1;
+        childBox.y2 = box.y2;
+        this.textBox.allocate(childBox, flags);
+    },
+    
+    getPreferedHeight: function(actor, forWidth, alloc) {
+        let [minWidth, natWidth] = actor.get_preferred_width(0);
+        let [minHeight, natHeight] = this.text.get_preferred_height(natWidth);
+        
+        alloc.min_size = minHeight;
+        alloc.natural_size = natHeight;
+    },
+    
+    getPreferedWidth: function(actor, forHeight, alloc) {
+        let sbWidth = this.scrollBox.vscroll.width;
+        let sNode = this.actor.get_theme_node();
+        let width = sNode.adjust_for_width(this.actor.width);
+        alloc.min_size = width - sbWidth;
+        alloc.natural_size = width - sbWidth;
     },
     
     onButtonRelease: function(actor, event) {
@@ -408,20 +480,6 @@ Note.prototype = {
         }
     },
     
-    trackMouse: function() {
-        if( !Main.layoutManager.isTrackingChrome(this.actor) ) {
-            Main.layoutManager.addChrome(this.actor, { doNotAdd: true });
-            this._isTracked = true;
-        }
-    },
-    
-    untrackMouse: function() {
-        if( Main.layoutManager.isTrackingChrome(this.actor) ) {
-            Main.layoutManager.untrackChrome(this.actor);
-            this._isTracked = false;
-        }
-    },
-    
     onTextFocused: function() {
         if ( !this.unfocusId ) this.unfocusId = this.text.connect("key-focus-out", Lang.bind(this, this.unfocusText));
         this.actor.add_style_pseudo_class("focus");
@@ -479,54 +537,22 @@ Note.prototype = {
             if ( cursor != selection ) this.text.delete_selection();
             this.text.insert_text(text, this.text.get_cursor_position());
         }));
-    },
-    
-    editTitle: function() {
-        this.titleBox.remove_all_children();
-        
-        let text;
-        if ( this.title ) text = this.title;
-        else text = "Title";
-        this.titleEntry = new St.Entry({ text: text, style_class: "sticky-title" });
-        this.titleBox.add_actor(this.titleEntry);
-        if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
-        global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
-        this.titleEntry.grab_key_focus();
-        this.titleEntry.clutter_text.set_selection(0, -1);
-        
-        global.stage.connect("button-press-event", Lang.bind(this, function() { this.uneditTitle(true); }));
-        this.titleEntry.clutter_text.connect("key-press-event", Lang.bind(this, function(actor, event) {
-            switch ( event.get_key_symbol() ) {
-                case Clutter.KEY_Escape:
-                    this.uneditTitle(false);
-                    return true;
-                case Clutter.Return:
-                case Clutter.KP_Enter:
-                    this.uneditTitle(true);
-                    this.emit("changed");
-                    return true;
-                default:
-                    return false;
-            }
-        }));
-    },
-    
-    uneditTitle: function(update) {
-        if ( update ) {
-            if ( this.titleEntry.text == "" ) this.title = undefined;
-            else this.title = this.titleEntry.text;
-        }
-        
-        this.titleBox.remove_actor(this.titleEntry);
-        
-        if ( this.title ) {
-            this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
-            this.titleMenuItem.label.text = "Edit title";
-        }
-        else this.titleMenuItem.label.text = "Add title";
     }
 }
 Signals.addSignalMethods(Note.prototype);
+
+
+function TaskList(info) {
+    this._init(info);
+}
+
+TaskList.prototype = {
+    __proto__: NoteBase.prototype,
+
+    _init: function(info) {
+        NoteBase.prototype._init.call(this);
+    }
+}
 
 
 function NoteBox() {
@@ -570,8 +596,19 @@ NoteBox.prototype = {
         this.dragPlaceholder.destroy();
     },
     
-    addNote: function(info) {
-        let note = new Note(info);
+    addNote: function(type, info) {
+        let note;
+        switch ( type ) {
+            case "note":
+                note = new Note(info);
+                break;
+            case "task":
+                note = new TaskList(info);
+                break;
+            default:
+                return null;
+        }
+
         let x, y;
         if ( info ) {
             x = info.x;
@@ -598,7 +635,14 @@ NoteBox.prototype = {
     },
     
     newNote: function() {
-        let note = this.addNote(null);
+        let note = this.addNote("note", null);
+        this.update();
+        this.raiseNotes();
+        Mainloop.idle_add(Lang.bind(note, note.focusText));
+    },
+    
+    newTask: function() {
+        let note = this.addNote("task", null);
         this.update();
         this.raiseNotes();
         Mainloop.idle_add(Lang.bind(note, note.focusText));
@@ -961,11 +1005,19 @@ MyApplet.prototype = {
         
         let newNoteButton = new St.Button({ style_class: "sticky-button" });
         buttonBox.add_actor(newNoteButton);
-        let newNoteFile = Gio.file_new_for_path(this.metadata.path+"/icons/add-symbolic.svg");
+        let newNoteFile = Gio.file_new_for_path(this.metadata.path+"/icons/add-note-symbolic.svg");
         let newNoteGicon = new Gio.FileIcon({ file: newNoteFile });
         let newNoteIcon = new St.Icon({ gicon: newNoteGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
         newNoteButton.add_actor(newNoteIcon);
         newNoteButton.connect("clicked", Lang.bind(noteBox, noteBox.newNote));
+        
+        let newTaskButton = new St.Button({ style_class: "sticky-button" });
+        buttonBox.add_actor(newTaskButton);
+        let newTaskFile = Gio.file_new_for_path(this.metadata.path+"/icons/add-task-symbolic.svg");
+        let newTaskGicon = new Gio.FileIcon({ file: newTaskFile });
+        let newTaskIcon = new St.Icon({ gicon: newTaskGicon, icon_size: 16, icon_type: St.IconType.SYMBOLIC });
+        newTaskButton.add_actor(newTaskIcon);
+        newTaskButton.connect("clicked", Lang.bind(noteBox, noteBox.newTask));
         
         let pinNotesButton = new St.Button({ style_class: "sticky-button" });
         buttonBox.add_actor(pinNotesButton);
