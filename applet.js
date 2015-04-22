@@ -24,7 +24,7 @@ const Util = imports.misc.util;
 const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
-const ICON_SIZE = 24;
+const ICON_SIZE = 16;
 
 const THEMES = {
     "green": "Mint-X-Green",
@@ -999,37 +999,24 @@ MyApplet.prototype = {
     },
     
     buildMenu: function() {
-        let buttonBin = new St.Bin({ style_class: "sticky-menuBox" });
-        this.menu.addActor(buttonBin);
-        let buttonBox = new St.BoxLayout({ vertical: true, style_class: "sticky-buttonBox" });
-        buttonBin.set_child(buttonBox);
-        
-        let newNoteButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
-        buttonBox.add_actor(newNoteButton);
-        let newNoteIcon = new St.Icon({ icon_name: "add-note-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
-        newNoteButton.add_actor(newNoteIcon);
-        newNoteButton.connect("clicked", Lang.bind(noteBox, noteBox.newNote));
-        
-        let newTaskButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
-        buttonBox.add_actor(newTaskButton);
-        let newTaskIcon = new St.Icon({ icon_name: "add-task-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
-        newTaskButton.add_actor(newTaskIcon);
-        newTaskButton.connect("clicked", Lang.bind(noteBox, noteBox.newTask));
-        
-        let pinNotesButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
-        buttonBox.add_actor(pinNotesButton);
-        let pinNotesIcon = new St.Icon({ icon_name: "pin-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
-        pinNotesButton.add_actor(pinNotesIcon);
-        pinNotesButton.connect("clicked", Lang.bind(noteBox, function() {
+        let newNoteMenuItem = new PopupMenu.PopupIconMenuItem("New note", "add-note-symbolic", St.IconType.SYMBOLIC);
+        this.menu.addMenuItem(newNoteMenuItem);
+        newNoteMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newNote));
+
+        let newCheckListMenuItem = new PopupMenu.PopupIconMenuItem("New check-list", "add-task-symbolic", St.IconType.SYMBOLIC);
+        this.menu.addMenuItem(newCheckListMenuItem);
+        newCheckListMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newTask));
+
+        let newPinMenuItem = new PopupMenu.PopupIconMenuItem("Keep notes on top", "pin-symbolic", St.IconType.SYMBOLIC);
+        this.menu.addMenuItem(newPinMenuItem);
+        newPinMenuItem.connect("activate", Lang.bind(noteBox, function() {
             if ( !this.isPinned ) this.pinNotes();
             else this.raiseNotes();
         }));
-        
-        let hideNotesButton = new St.Button({ style_class: "sticky-button menu-favorites-button" });
-        buttonBox.add_actor(hideNotesButton);
-        let hideNotesIcon = new St.Icon({ icon_name: "hide-symbolic", icon_size: ICON_SIZE, icon_type: St.IconType.SYMBOLIC });
-        hideNotesButton.add_actor(hideNotesIcon);
-        hideNotesButton.connect("clicked", Lang.bind(noteBox, noteBox.hideNotes));
+
+        let newHideMenuItem = new PopupMenu.PopupIconMenuItem("Hide notes", "hide-symbolic", St.IconType.SYMBOLIC);
+        this.menu.addMenuItem(newHideMenuItem);
+        newHideMenuItem.connect("activate", Lang.bind(noteBox, noteBox.hideNotes));
     }
 }
 
