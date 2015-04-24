@@ -980,7 +980,7 @@ NoteBox.prototype = {
     },
     
     acceptDrop: function(source, actor, x, y, time) {
-        if ( !(source instanceof Note) ) return false;
+        if ( !(source instanceof NoteBase) ) return false;
         
         Main.uiGroup.remove_actor(actor);
         this.actor.add_actor(actor);
@@ -998,7 +998,7 @@ NoteBox.prototype = {
     },
     
     cancelDrag: function(source, actor) {
-        if ( !(source instanceof Note) ) return false;
+        if ( !(source instanceof NoteBase) ) return false;
         
         Main.uiGroup.remove_actor(actor);
         this.actor.add_actor(actor);
