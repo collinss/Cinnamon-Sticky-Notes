@@ -150,12 +150,15 @@ NoteBase.prototype = {
         this.actor._delegate = this;
         componentManager.addActor(this.actor);
         
-        this.titleBox = new St.Bin({ x_align: St.Align.START, style_class: "sticky-titleBox" });
+        this.titleBox = new St.BoxLayout({ style_class: "sticky-titleBox" });
         this.actor.add_actor(this.titleBox);
+
+        this.titleBin = new St.Bin({ x_align: St.Align.START });
+        this.titleBox.add_actor(this.titleBin);
         
         if ( info && info.title ) {
             this.title = info.title;
-            this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
+            this.titleBin.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
         }
 
         this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
@@ -277,13 +280,13 @@ NoteBase.prototype = {
     },
     
     editTitle: function() {
-        this.titleBox.remove_all_children();
+        this.titleBin.remove_all_children();
         
         let text;
         if ( this.title ) text = this.title;
         else text = "Title";
         this.titleEntry = new St.Entry({ text: text, style_class: "sticky-title" });
-        this.titleBox.add_actor(this.titleEntry);
+        this.titleBin.add_actor(this.titleEntry);
         if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
         global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
         this.titleEntry.grab_key_focus();
@@ -312,10 +315,10 @@ NoteBase.prototype = {
             else this.title = this.titleEntry.text;
         }
         
-        this.titleBox.remove_actor(this.titleEntry);
+        this.titleBin.remove_actor(this.titleEntry);
         
         if ( this.title ) {
-            this.titleBox.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
+            this.titleBin.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
             this.titleMenuItem.label.text = "Edit title";
         }
         else this.titleMenuItem.label.text = "Add title";
@@ -551,7 +554,7 @@ CheckList.prototype = {
     __proto__: NoteBase.prototype,
 
     _init: function(info) {
-        NoteBase.prototype._init.call(this);
+        NoteBase.prototype._init.call(this, info);
 
         this.items = [];
 
