@@ -8,6 +8,7 @@ const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 
 const Applet = imports.ui.applet;
+const CheckBox = imports.ui.checkBox;
 const DND = imports.ui.dnd;
 const Main = imports.ui.main;
 const ModalDialog = imports.ui.modalDialog;
@@ -24,7 +25,6 @@ const Util = imports.misc.util;
 const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
-const ICON_SIZE = 16;
 
 const THEMES = {
     "green": "Mint-X-Green",
@@ -321,6 +321,7 @@ NoteBase.prototype = {
         else this.titleMenuItem.label.text = "Add title";
     }
 }
+Signals.addSignalMethods(NoteBase.prototype);
 
 
 function Note(info) {
@@ -517,7 +518,7 @@ Note.prototype = {
     },
     
     getInfo: function() {
-        let info = { text: this.textBox.text, x: this.actor.x, y: this.actor.y, theme: this.theme };
+        let info = { type: "note", text: this.textBox.text, x: this.actor.x, y: this.actor.y, theme: this.theme };
         if ( this.title ) info.title = this.title;
         return info;
     },
@@ -540,18 +541,145 @@ Note.prototype = {
         }));
     }
 }
-Signals.addSignalMethods(Note.prototype);
 
 
-function TaskList(info) {
+function CheckList(info) {
     this._init(info);
 }
 
-TaskList.prototype = {
+CheckList.prototype = {
     __proto__: NoteBase.prototype,
 
     _init: function(info) {
         NoteBase.prototype._init.call(this);
+
+        this.items = [];
+
+        this.scrollBox = new St.ScrollView();
+        this.actor.add_actor(this.scrollBox);
+
+        this.listBox = new St.BoxLayout({ vertical: true });
+        this.scrollBox.add_actor(this.listBox);
+
+        if ( info && info.items ) {
+            for ( let item of info.items ) {
+                this.addItem(item);
+            }
+        }
+        else {
+            this.addItem();
+        }
+            
+        this.buildMenu();
+    },
+
+    addItem: function(itemInfo) {
+        let item = new CheckListItem(itemInfo);
+        this.listBox.add_actor(item.actor);
+        this.items.push(item);
+    },
+
+    getInfo: function() {
+        let info = { type: "checklist", x: this.actor.x, y: this.actor.y, theme: this.theme, items: [] };
+        for ( var i = 0; i < this.items.length; i++ ) {
+            info.items.push({ completed: this.items[i].completed, text: this.items[i].text });
+        }
+        if ( this.title ) info.title = this.title;
+        return info;
+    },
+
+    onButtonRelease: function(actor, event) {
+        if ( event.get_button() == 3 ) return true;
+        
+        if ( this.pointerGrabbed ) {
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+            Clutter.ungrab_pointer();
+            this.pointerGrabbed = false;
+            return false;
+        }
+        
+        if ( event.get_source() == this.text ) {
+            if ( !settings.raisedState ) this.focusText();
+        }
+        else {
+            this.focusText();
+            this.text.cursor_position = this.text.selection_bound = this.text.text.length;
+        }
+        
+        return false;
+    },
+    
+    onButtonPress: function(actor, event) {
+        if ( event.get_button() == 3 ) {
+            this.menu.toggle();
+            
+            //make sure menu is positioned correctly
+            let rightEdge;
+            for ( let i = 0; i < Main.layoutManager.monitors.length; i++ ) {
+                let monitor = Main.layoutManager.monitors[i];
+                
+                if ( monitor.x <= this.actor.x &&
+                     monitor.y <= this.actor.y &&
+                     monitor.x + monitor.width > this.actor.x &&
+                     monitor.y + monitor.height > this.actor.y ) {
+                    
+                    rightEdge = monitor.x + monitor.width;
+                    break;
+                }
+            }
+            
+            if ( this.actor.x + this.actor.width + this.menu.actor.width > rightEdge )
+                this.menu.setArrowSide(St.Side.RIGHT);
+            else this.menu.setArrowSide(St.Side.LEFT);
+            
+            return true;
+        }
+        
+        if ( this.menu.isOpen ) this.menu.close();
+        
+        if ( actor == this.text ) {
+            if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
+            Clutter.grab_pointer(this.text);
+            this.pointerGrabbed = true;
+        }
+        
+        return false;
+    },
+
+    copy: function() {
+        
+    },
+
+    paste: function() {
+        
+    }
+}
+
+
+function CheckListItem(info) {
+    this._init(info);
+}
+
+CheckListItem.prototype = {
+    _init: function(info) {
+        this.actor = new St.BoxLayout();
+        this.checkBox = new CheckBox.CheckBox("", {  });
+        this.actor.add_actor(this.checkBox.actor);
+        this.label = new St.Entry();
+        this.actor.add_actor(this.label);
+        if ( info ) {
+            this.checkBox.actor.checked = info.completed;
+            this.label.text = info.text;
+        }
+    },
+
+    get completed() {
+        return this.checkBox.actor.checked;
+    },
+
+    get text() {
+        return this.label.text;
     }
 }
 
@@ -603,8 +731,8 @@ NoteBox.prototype = {
             case "note":
                 note = new Note(info);
                 break;
-            case "task":
-                note = new TaskList(info);
+            case "checklist":
+                note = new CheckList(info);
                 break;
             default:
                 return null;
@@ -642,11 +770,15 @@ NoteBox.prototype = {
         Mainloop.idle_add(Lang.bind(note, note.focusText));
     },
     
-    newTask: function() {
-        let note = this.addNote("task", null);
+    newCheckList: function() {
+        try {
+        let note = this.addNote("checklist", null);
         this.update();
         this.raiseNotes();
-        Mainloop.idle_add(Lang.bind(note, note.focusText));
+        // Mainloop.idle_add(Lang.bind(note, note.focusText));
+        } catch(e) {
+            global.logError(e);
+        }
     },
     
     removeNote: function(note) {
@@ -673,7 +805,12 @@ NoteBox.prototype = {
     initializeNotes: function() {
         try {
             for ( let i = 0; i < settings.storedNotes.length; i++ ) {
-                this.addNote("note",settings.storedNotes[i]);
+                let noteInfo = settings.storedNotes[i];
+                //make sure it doesn't break anything on upgrade
+                let type;
+                if ( !noteInfo.type ) type = "note";
+                else type = noteInfo.type;
+                this.addNote(type, noteInfo);
             }
         } catch(e) {
             global.logError(e);
@@ -1003,9 +1140,9 @@ MyApplet.prototype = {
         this.menu.addMenuItem(newNoteMenuItem);
         newNoteMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newNote));
 
-        let newCheckListMenuItem = new PopupMenu.PopupIconMenuItem("New check-list", "add-task-symbolic", St.IconType.SYMBOLIC);
+        let newCheckListMenuItem = new PopupMenu.PopupIconMenuItem("New check-list", "add-checklist-symbolic", St.IconType.SYMBOLIC);
         this.menu.addMenuItem(newCheckListMenuItem);
-        newCheckListMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newTask));
+        newCheckListMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newCheckList));
 
         let newPinMenuItem = new PopupMenu.PopupIconMenuItem("Keep notes on top", "pin-symbolic", St.IconType.SYMBOLIC);
         this.menu.addMenuItem(newPinMenuItem);
