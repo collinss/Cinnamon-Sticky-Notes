@@ -10,6 +10,17 @@
     height: 25px;
 }
 
+.sticky-checkBox StBin {
+    width: 16px;
+    height: 16px;
+    padding-right: 3px;
+    background-image: url("icons/checkbox-unchecked.svg");
+}
+
+.sticky-checkBox:checked StBin {
+    background-image: url("icons/checkbox-checked.svg");
+}
+
 
 /*Mint-X theme*/
 .green-noteBox {

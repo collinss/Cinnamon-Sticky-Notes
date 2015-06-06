@@ -154,8 +154,8 @@ NoteBase.prototype = {
         this.actor.add_actor(this.titleBox);
 
         this.titleBin = new St.Bin({ x_align: St.Align.START });
-        this.titleBox.add_actor(this.titleBin);
-        
+        this.titleBox.add(this.titleBin, { expand: true });
+
         if ( info && info.title ) {
             this.title = info.title;
             this.titleBin.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
@@ -243,8 +243,9 @@ NoteBase.prototype = {
     },
     
     updateDnD: function() {
-        if ( this.text.has_pointer ) this.draggable.inhibit = true;
-        else this.draggable.inhibit = false;
+        // FIXME
+        // if ( this.text.has_pointer ) this.draggable.inhibit = true;
+        // else this.draggable.inhibit = false;
     },
     
     destroy: function(){
@@ -561,8 +562,8 @@ CheckList.prototype = {
         this.scrollBox = new St.ScrollView();
         this.actor.add_actor(this.scrollBox);
 
-        this.listBox = new St.BoxLayout({ vertical: true });
-        this.scrollBox.add_actor(this.listBox);
+        this.itemBox = new St.BoxLayout({ vertical: true });
+        this.scrollBox.add_actor(this.itemBox);
 
         if ( info && info.items ) {
             for ( let item of info.items ) {
@@ -570,16 +571,39 @@ CheckList.prototype = {
             }
         }
         else {
-            this.addItem();
+            this.newItem();
         }
             
         this.buildMenu();
     },
 
-    addItem: function(itemInfo) {
+    addItem: function(itemInfo, index, prevSibling) {
         let item = new CheckListItem(itemInfo);
-        this.listBox.add_actor(item.actor);
-        this.items.push(item);
+
+        this.itemBox.add_actor(item.actor);
+        if ( prevSibling ) item.actor.raise(prevSibling.actor);
+        if ( index ) this.items.splice(index, 0, item);
+        else this.items.push(item);
+        item.connect("new", Lang.bind(this, this.newItem));
+        item.connect("remove", Lang.bind(this, this.removeItem));
+
+        return item;
+    },
+
+    newItem: function(oldItem, text) {
+        let info;
+        if ( text ) info = { text: text, completed: false };
+
+        this.addItem(info, this.items.indexOf(oldItem)+1, oldItem);
+    },
+
+    removeItem: function(oldItem, text) {
+        let index = this.items.indexOf(oldItem);
+        if ( index == 0 ) return;
+
+        this.itemBox.remove_actor(oldItem.actor);
+        this.items.splice(index, 1);
+        this.items[i-1].entry.text += text;
     },
 
     getInfo: function() {
@@ -667,14 +691,19 @@ function CheckListItem(info) {
 CheckListItem.prototype = {
     _init: function(info) {
         this.actor = new St.BoxLayout();
-        this.checkBox = new CheckBox.CheckBox("", {  });
+        this.checkBox = new CheckBox.CheckBox("", { style_class: "sticky-checkBox" });
         this.actor.add_actor(this.checkBox.actor);
-        this.label = new St.Entry();
-        this.actor.add_actor(this.label);
+        this.entry = new St.Entry();
+        this.actor.add(this.entry, { expand: true });
+
+        this.clutterText = this.entry.clutter_text;
+
         if ( info ) {
             this.checkBox.actor.checked = info.completed;
-            this.label.text = info.text;
+            this.entry.text = info.text;
         }
+
+        this.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
     },
 
     get completed() {
@@ -682,9 +711,32 @@ CheckListItem.prototype = {
     },
 
     get text() {
-        return this.label.text;
+        return this.entry.text;
+    },
+
+    handleKeyPress: function(actor, event) {
+        let keyCode = event.get_key_symbol();
+        let position = this.clutterText.cursor_position;
+        switch ( keyCode ) {
+            case Clutter.Return:
+            case Clutter.KP_Enter:
+                if ( this.entry.text.length == 0 ) return false;
+                let newItemText = String(this.entry.text.slice(position));
+                this.entry.text = this.entry.text.slice(0, position);
+                this.emit("new", newItemText);
+                return true;
+            case Clutter.BackSpace:
+                if ( position == 0 || (position == -1 && this.text.length == 0)) {
+                    this.emit("remove", this.text);
+                    return true;
+                }
+                break;
+        }
+
+        return false;
     }
 }
+Signals.addSignalMethods(CheckListItem.prototype);
 
 
 function NoteBox() {
