@@ -696,13 +696,45 @@ CheckList.prototype = {
                     return true;
                 }
                 break;
+            case Clutter.Delete:
+                if ( index < this.items.length - 1 && (position == -1) ) {
+                    let newPos = item.entry.text.length;
+                    let nextItem = this.items[index+1];
+                    let text = nextItem.text;
+                    this.itemBox.remove_actor(nextItem.actor);
+                    this.items.splice(index+1, 1);
+                    item.entry.text += text;
+                    item.entry.clutter_text.position = item.entry.clutter_text.selection_bound = newPos;
+                    return true;
+                }
+                break;
             case Clutter.Up:
-                if ( index == 0 ) return false;
-                this.items[index-1].entry.grab_key_focus();
+                if ( index > 0 ) {
+                    this.items[index-1].entry.grab_key_focus();
+                    this.items[index-1].entry.clutter_text.position = this.items[index-1].entry.clutter_text.selection_bound = position;
+                    return true;
+                }
                 break;
             case Clutter.Down:
-                if ( index == this.items.length - 1 ) return false;
-                this.items[index+1].entry.grab_key_focus();
+                if ( index < this.items.length - 1 ) {
+                    this.items[index+1].entry.grab_key_focus();
+                    this.items[index+1].entry.clutter_text.position = this.items[index+1].entry.clutter_text.selection_bound = position;
+                    return true;
+                }
+                break;
+            case Clutter.Left:
+                if ( position == 0 && index > 0 ) {
+                    this.items[index-1].entry.grab_key_focus();
+                    this.items[index-1].entry.clutter_text.position = this.items[index-1].entry.clutter_text.selection_bound = -1;
+                    return true;
+                }
+                break;
+            case Clutter.Right:
+                if ( position == -1 && index < this.items.length - 1 ) {
+                    this.items[index+1].entry.grab_key_focus();
+                    this.items[index+1].entry.clutter_text.position = this.items[index+1].entry.clutter_text.selection_bound = 0;
+                    return true;
+                }
                 break;
         }
         
