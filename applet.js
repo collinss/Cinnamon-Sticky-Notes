@@ -597,15 +597,6 @@ CheckList.prototype = {
         return item;
     },
     
-    removeItem: function(oldItem, text) {
-        let index = this.items.indexOf(oldItem);
-        if ( index == 0 ) return;
-        
-        this.itemBox.remove_actor(oldItem.actor);
-        this.items.splice(index, 1);
-        this.items[index-1].entry.text += text;
-    },
-    
     getInfo: function() {
         let info = { type: "checklist", x: this.actor.x, y: this.actor.y, theme: this.theme, items: [] };
         for ( var i = 0; i < this.items.length; i++ ) {
@@ -690,11 +681,18 @@ CheckList.prototype = {
                 }
                 let newItem = this.newItem(item, newItemText);
                 newItem.entry.grab_key_focus();
+                newItem.entry.clutter_text.position = newItem.entry.clutter_text.selection_bound = 0;
                 return true;
             case Clutter.BackSpace:
-                if ( position == 0 || (position == -1 && item.text.length == 0) ) {
-                    this.removeItem(item, item.text);
-                    this.items[index-1].entry.grab_key_focus();
+                if ( index != 0 && (position == 0 || (position == -1 && item.text.length == 0)) ) {
+                    let prevItem = this.items[index-1];
+                    let text = item.text;
+                    let pos = (text.length == 0) ? -1 : prevItem.entry.text.length;
+                    this.itemBox.remove_actor(item.actor);
+                    this.items.splice(index, 1);
+                    prevItem.entry.text += text;
+                    prevItem.entry.grab_key_focus();
+                    prevItem.entry.clutter_text.position = prevItem.entry.clutter_text.selection_bound = pos;
                     return true;
                 }
                 break;
