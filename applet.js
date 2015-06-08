@@ -683,8 +683,11 @@ CheckList.prototype = {
             case Clutter.Return:
             case Clutter.KP_Enter:
                 if ( item.entry.text.length == 0 ) return false;
-                let newItemText = String(item.entry.text.slice(position));
-                item.entry.text = item.entry.text.slice(0, position);
+                let newItemText = "";
+                if ( position != -1 ) {
+                    newItemText = String(item.entry.text.slice(position));
+                    item.entry.text = item.entry.text.slice(0, position);
+                }
                 let newItem = this.newItem(item, newItemText);
                 newItem.entry.grab_key_focus();
                 return true;
