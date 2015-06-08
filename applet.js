@@ -592,8 +592,9 @@ CheckList.prototype = {
     newItem: function(oldItem, text) {
         let info;
         if ( text ) info = { text: text, completed: false };
+        let item = this.addItem(info, this.items.indexOf(oldItem)+1, oldItem);
         
-        this.addItem(info, this.items.indexOf(oldItem)+1, oldItem);
+        return item;
     },
     
     removeItem: function(oldItem, text) {
@@ -675,6 +676,7 @@ CheckList.prototype = {
     
     handleKeyPress: function(actor, event) {
         let item = actor._delegate;
+        let index = this.items.indexOf(item);
         let keyCode = event.get_key_symbol();
         let position = item.clutterText.cursor_position;
         switch ( keyCode ) {
@@ -683,13 +685,23 @@ CheckList.prototype = {
                 if ( item.entry.text.length == 0 ) return false;
                 let newItemText = String(item.entry.text.slice(position));
                 item.entry.text = item.entry.text.slice(0, position);
-                this.newItem(item, newItemText);
+                let newItem = this.newItem(item, newItemText);
+                newItem.entry.grab_key_focus();
                 return true;
             case Clutter.BackSpace:
-                if ( position == 0 || (position == -1 && item.text.length == 0)) {
+                if ( position == 0 || (position == -1 && item.text.length == 0) ) {
                     this.removeItem(item, item.text);
+                    this.items[index-1].entry.grab_key_focus();
                     return true;
                 }
+                break;
+            case Clutter.Up:
+                if ( index == 0 ) return false;
+                this.items[index-1].entry.grab_key_focus();
+                break;
+            case Clutter.Down:
+                if ( index == this.items.length - 1 ) return false;
+                this.items[index+1].entry.grab_key_focus();
                 break;
         }
         
