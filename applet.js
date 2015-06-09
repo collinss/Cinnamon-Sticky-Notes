@@ -742,11 +742,30 @@ CheckList.prototype = {
     },
     
     copy: function() {
+        let text = "";
+        for ( let item of this.items ) {
+            let selectedText = item.entry.clutter_text.get_selection();
+            if ( selectedText != "" ) {
+                text = selectedText;
+                break;
+            }
+        }
+        if ( text == "" ) {
+            for ( item of this.items ) text += item.entry.text + "\n";
+        }
         
+        St.Clipboard.get_default().set_text(text);
     },
     
     paste: function() {
-        
+        St.Clipboard.get_default().get_text(Lang.bind(this, function(cb, text) {
+            if ( this.items.slice(-1).text == "" ) this.items.pop();
+            let list = text.split("\n");
+            for ( let newText of list ) {
+                if ( newText == "" ) continue;
+                this.addItem({ text: newText, completed: false });
+            }
+        }));
     }
 }
 
