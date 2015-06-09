@@ -577,22 +577,24 @@ CheckList.prototype = {
         this.buildMenu();
     },
     
-    addItem: function(itemInfo, index, prevSibling) {
+    addItem: function(itemInfo, insertAfter) {
         let item = new CheckListItem(itemInfo);
         
         this.itemBox.add_actor(item.actor);
-        if ( prevSibling ) item.actor.raise(prevSibling.actor);
-        if ( index ) this.items.splice(index, 0, item);
+        if ( insertAfter ) {
+            item.actor.raise(insertAfter.actor);
+            this.items.splice(this.items.indexOf(insertAfter)+1, 0, item);
+        }
         else this.items.push(item);
         item.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
 
         return item;
     },
     
-    newItem: function(oldItem, text) {
+    newItem: function(insertAfter, text) {
         let info;
         if ( text ) info = { text: text, completed: false };
-        let item = this.addItem(info, this.items.indexOf(oldItem)+1, oldItem);
+        let item = this.addItem(info, insertAfter);
         
         return item;
     },
