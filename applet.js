@@ -82,21 +82,15 @@ function SettingsManager(uuid, instanceId) {
 
 SettingsManager.prototype = {
     _init: function(uuid, instanceId) {
-        try {
-            
-            this.settings = new Settings.AppletSettings(this, uuid, instanceId);
-            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "storedNotes", "storedNotes");
-            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "raisedState", "raisedState");
-            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
-            this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme");
-            this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
-            this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
-            this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
-            this.settings.bindProperty(Settings.BindingDirection.IN, "lowerOnClick", "lowerOnClick");
-            
-        } catch(e) {
-            global.logError(e);
-        }
+        this.settings = new Settings.AppletSettings(this, uuid, instanceId);
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "storedNotes", "storedNotes");
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "raisedState", "raisedState");
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
+        this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme");
+        this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
+        this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
+        this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
+        this.settings.bindProperty(Settings.BindingDirection.IN, "lowerOnClick", "lowerOnClick");
     },
     
     saveNotes:function(notes) {
@@ -341,51 +335,47 @@ Note.prototype = {
     __proto__: NoteBase.prototype,
 
     _init: function(info) {
-        try {
-            NoteBase.prototype._init.call(this, info);
-            
-            this.switching = false;
+        NoteBase.prototype._init.call(this, info);
+        
+        this.switching = false;
 
-            this.scrollBox = new St.ScrollView();
-            this.actor.add_actor(this.scrollBox);
-            this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-            
-            this.textBin = new St.BoxLayout();
-            this.scrollBox.add_actor(this.textBin);
-            
-            this.textWrapper = new Cinnamon.GenericContainer();
-            this.textBin.add_actor(this.textWrapper);
-            
-            this.textBox = new St.Entry({  });
-            this.textWrapper.add_actor(this.textBox);
-            if ( info ) this.textBox.text = info.text;
-            
-            this.text = this.textBox.clutter_text;
-            this.text.set_single_line_mode(false);
-            this.text.set_activatable(false);
-            this.text.ellipsize = Pango.EllipsizeMode.NONE;
-            this.text.line_wrap = true;
-            this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
-            this.text.set_selectable(true);
-            
-            this.textWrapper.connect("allocate", Lang.bind(this, this.allocate));
-            this.textWrapper.connect("get-preferred-height", Lang.bind(this, this.getPreferedHeight));
-            this.textWrapper.connect("get-preferred-width", Lang.bind(this, this.getPreferedWidth));
-            this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
-            this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-            this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
-            this.text.connect("cursor-event", Lang.bind(this, this.handleScrollPosition));
-            this.text.connect("key-focus-in", Lang.bind(this, this.onTextFocused));
-            
-            let padding = new St.Bin({ reactive: true });
-            this.actor.add(padding, { y_expand: true, y_fill: true, x_expand: true, x_fill: true });
-            
-            let switchTypeMenuItem = new PopupMenu.PopupMenuItem("Switch to check list");
-            this.contentMenuSection.addMenuItem(switchTypeMenuItem);
-            switchTypeMenuItem.connect("activate", Lang.bind(this, this.switchType));
-        } catch(e) {
-            global.logError(e);
-        }
+        this.scrollBox = new St.ScrollView();
+        this.actor.add_actor(this.scrollBox);
+        this.scrollBox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        
+        this.textBin = new St.BoxLayout();
+        this.scrollBox.add_actor(this.textBin);
+        
+        this.textWrapper = new Cinnamon.GenericContainer();
+        this.textBin.add_actor(this.textWrapper);
+        
+        this.textBox = new St.Entry({  });
+        this.textWrapper.add_actor(this.textBox);
+        if ( info ) this.textBox.text = info.text;
+        
+        this.text = this.textBox.clutter_text;
+        this.text.set_single_line_mode(false);
+        this.text.set_activatable(false);
+        this.text.ellipsize = Pango.EllipsizeMode.NONE;
+        this.text.line_wrap = true;
+        this.text.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+        this.text.set_selectable(true);
+        
+        this.textWrapper.connect("allocate", Lang.bind(this, this.allocate));
+        this.textWrapper.connect("get-preferred-height", Lang.bind(this, this.getPreferedHeight));
+        this.textWrapper.connect("get-preferred-width", Lang.bind(this, this.getPreferedWidth));
+        this.text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+        this.text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+        this.text.connect("text-changed", Lang.bind(this, function() { this.emit("changed"); }));
+        this.text.connect("cursor-event", Lang.bind(this, this.handleScrollPosition));
+        this.text.connect("key-focus-in", Lang.bind(this, this.onTextFocused));
+        
+        let padding = new St.Bin({ reactive: true });
+        this.actor.add(padding, { y_expand: true, y_fill: true, x_expand: true, x_fill: true });
+        
+        let switchTypeMenuItem = new PopupMenu.PopupMenuItem("Switch to check list");
+        this.contentMenuSection.addMenuItem(switchTypeMenuItem);
+        switchTypeMenuItem.connect("activate", Lang.bind(this, this.switchType));
     },
     
     allocate: function(actor, box, flags) {
@@ -957,14 +947,10 @@ NoteBox.prototype = {
     },
     
     newCheckList: function() {
-        try {
         let note = this.addNote("checklist", null);
         this.update();
         this.raiseNotes();
         // Mainloop.idle_add(Lang.bind(note, note.focusText));
-        } catch(e) {
-            global.logError(e);
-        }
     },
     
     removeNote: function(note) {
@@ -995,71 +981,54 @@ NoteBox.prototype = {
     },
     
     initializeNotes: function() {
-        try {
-            this.removeAll();
-            for ( let i = 0; i < settings.storedNotes.length; i++ ) {
-                let noteInfo = settings.storedNotes[i];
-                //make sure it doesn't break anything on upgrade
-                let type;
-                if ( !noteInfo.type ) type = "note";
-                else type = noteInfo.type;
-                this.addNote(type, noteInfo);
-            }
-        } catch(e) {
-            global.logError(e);
+        this.removeAll();
+        for ( let noteInfo of settings.storedNotes ) {
+            let type;
+            //make sure it doesn't break anything on upgrade from older version
+            if ( !noteInfo.type ) type = "note";
+            else type = noteInfo.type;
+            this.addNote(type, noteInfo);
         }
     },
     
     raiseNotes: function() {
-        try {
-            this.actor.raise_top();
-            if ( settings.hideState ) {
-                this.actor.show();
-                settings.hideState = false;
-            }
-            
-            settings.raisedState = true;
-            this.isPinned = false;
-            this.checkMouseTracking();
-            if ( settings.lowerOnClick ) {
-                this.setModal();
-            }
-            this.emit("state-changed");
-        } catch(e) {
-            global.logError(e);
+        this.actor.raise_top();
+        if ( settings.hideState ) {
+            this.actor.show();
+            settings.hideState = false;
         }
+        
+        settings.raisedState = true;
+        this.isPinned = false;
+        this.checkMouseTracking();
+        if ( settings.lowerOnClick ) {
+            this.setModal();
+        }
+        this.emit("state-changed");
     },
     
     lowerNotes: function() {
-        try {
-            this.actor.lower(global.window_group);
-            if ( settings.hideState ) {
-                this.actor.show();
-                settings.hideState = false;
-            }
-            
-            this.isPinned = false;
-            settings.raisedState = false;
-            this.checkMouseTracking();
-            
-            this.unsetModal();
-            this.emit("state-changed");
-        } catch(e) {
-            global.logError(e);
+        this.actor.lower(global.window_group);
+        if ( settings.hideState ) {
+            this.actor.show();
+            settings.hideState = false;
         }
+        
+        this.isPinned = false;
+        settings.raisedState = false;
+        this.checkMouseTracking();
+        
+        this.unsetModal();
+        this.emit("state-changed");
     },
     
     hideNotes: function() {
-        try {
-            this.actor.hide();
-            settings.raisedState = false;
-            settings.hideState = true;
-            this.isPinned = false;
-            this.unsetModal();
-            this.emit("state-changed");
-        } catch(e) {
-            global.logError(e);
-        }
+        this.actor.hide();
+        settings.raisedState = false;
+        settings.hideState = true;
+        this.isPinned = false;
+        this.unsetModal();
+        this.emit("state-changed");
     },
     
     pinNotes: function() {
@@ -1097,23 +1066,19 @@ NoteBox.prototype = {
     },
     
     handleStageEvent: function(actor, event) {
-        try {
-            if ( this.isPinned ) return false;
+        if ( this.isPinned ) return false;
 
-            let target = event.get_source();
-            
-            if ( componentManager.hasActor(target) ) return false;
-            
-            let type = event.type();
-            if ( type == Clutter.EventType.BUTTON_PRESS ) return true;
-            if ( type == Clutter.EventType.BUTTON_RELEASE ) {
-                this.lowerNotes();
-                return false;
-            }
-            
-        } catch(e) {
-            global.logError(e);
+        let target = event.get_source();
+        
+        if ( componentManager.hasActor(target) ) return false;
+        
+        let type = event.type();
+        if ( type == Clutter.EventType.BUTTON_PRESS ) return true;
+        if ( type == Clutter.EventType.BUTTON_RELEASE ) {
+            this.lowerNotes();
+            return false;
         }
+        
         return false;
     },
     
@@ -1288,33 +1253,27 @@ MyApplet.prototype = {
     __proto__: Applet.IconApplet.prototype,
     
     _init: function(metadata, orientation, panelHeight, instanceId) {
-        try {
-            
-            applet = this;
-            this.metadata = metadata;
-            this.instanceId = instanceId;
-            this.orientation = orientation;
-            
-            Applet.IconApplet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
-            
-            componentManager = new ComponentManager();
-            componentManager.addActor(this.actor);
-            
-            this.set_applet_icon_symbolic_path(this.metadata.path+"/icons/sticky-symbolic.svg");
-            
-            this.notesMenuManager = new MenuManager(this);
-            
-            noteBox = new NoteBox();
-            
-            this.menu = new Applet.AppletPopupMenu(this, this.orientation);
-            this.notesMenuManager.addMenu(this.menu);
-            componentManager.addActor(this.menu.actor);
-            
-            this.buildMenu();
-            
-        } catch(e) {
-            global.logError(e);
-        }
+        applet = this;
+        this.metadata = metadata;
+        this.instanceId = instanceId;
+        this.orientation = orientation;
+        
+        Applet.IconApplet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
+        
+        componentManager = new ComponentManager();
+        componentManager.addActor(this.actor);
+        
+        this.set_applet_icon_symbolic_path(this.metadata.path+"/icons/sticky-symbolic.svg");
+        
+        this.notesMenuManager = new MenuManager(this);
+        
+        noteBox = new NoteBox();
+        
+        this.menu = new Applet.AppletPopupMenu(this, this.orientation);
+        this.notesMenuManager.addMenu(this.menu);
+        componentManager.addActor(this.menu.actor);
+        
+        this.buildMenu();
     },
     
     on_applet_clicked: function() {
