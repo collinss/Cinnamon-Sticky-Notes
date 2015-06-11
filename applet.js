@@ -179,11 +179,16 @@ NoteBase.prototype = {
         Main.uiGroup.add_actor(this.menu.actor);
         componentManager.addActor(this.menu.actor);
         this.menu.actor.hide();
+        
+        this.buildMenu();
     },
     
     buildMenu: function() {
+        this.contentMenuSection = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this.contentMenuSection);
+        
         let themeSection = new PopupMenu.PopupSubMenuMenuItem(_("Change theme"));
-        this.menu.addMenuItem(themeSection);
+        this.contentMenuSection.addMenuItem(themeSection);
         
         for ( let codeName in THEMES ) {
             let themeItem = new PopupMenu.PopupMenuItem(THEMES[codeName]);
@@ -192,7 +197,7 @@ NoteBase.prototype = {
         }
         
         this.titleMenuItem = new PopupMenu.PopupMenuItem(this.title ? "Edit title" : "Add title");
-        this.menu.addMenuItem(this.titleMenuItem);
+        this.contentMenuSection.addMenuItem(this.titleMenuItem);
         this.titleMenuItem.connect("activate", Lang.bind(this, this.editTitle));
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -338,6 +343,8 @@ Note.prototype = {
     _init: function(info) {
         try {
             NoteBase.prototype._init.call(this, info);
+            
+            this.switching = false;
 
             this.scrollBox = new St.ScrollView();
             this.actor.add_actor(this.scrollBox);
@@ -373,8 +380,9 @@ Note.prototype = {
             let padding = new St.Bin({ reactive: true });
             this.actor.add(padding, { y_expand: true, y_fill: true, x_expand: true, x_fill: true });
             
-            this.buildMenu();
-            
+            let switchTypeMenuItem = new PopupMenu.PopupMenuItem("Switch to check list");
+            this.contentMenuSection.addMenuItem(switchTypeMenuItem);
+            switchTypeMenuItem.connect("activate", Lang.bind(this, this.switchType));
         } catch(e) {
             global.logError(e);
         }
@@ -522,8 +530,35 @@ Note.prototype = {
     },
     
     getInfo: function() {
-        let info = { type: "note", text: this.textBox.text, x: this.actor.x, y: this.actor.y, theme: this.theme };
+        let info = { x: this.actor.x, y: this.actor.y, theme: this.theme };
         if ( this.title ) info.title = this.title;
+        
+        if ( this.switching ) {
+            info.type = "checklist";
+            info.items = [];
+            let lines = this.textBox.text.split("\n");
+            for ( let line of lines ) {
+                if ( line == "" ) continue;
+                let item = {};
+                if ( line[0] == "+" ) {
+                    item.completed = true;
+                    item.text = line.slice(1);
+                }
+                else {
+                    item.completed = false;
+                    if ( ["-", "*"].indexOf(line[0]) != -1 ) {
+                        line = line.slice(1);
+                    }
+                    item.text = line;
+                }
+                info.items.push(item);
+            }
+        }
+        else {
+            info.type = "note";
+            info.text = this.textBox.text;
+        }
+        
         return info;
     },
     
@@ -543,6 +578,11 @@ Note.prototype = {
             if ( cursor != selection ) this.text.delete_selection();
             this.text.insert_text(text, this.text.get_cursor_position());
         }));
+    },
+    
+    switchType: function() {
+        this.switching = true;
+        this.emit("changed", true);
     }
 }
 
@@ -557,6 +597,7 @@ CheckList.prototype = {
     _init: function(info) {
         NoteBase.prototype._init.call(this, info);
         
+        this.switching = false;
         this.items = [];
         
         this.scrollBox = new St.ScrollView();
@@ -573,8 +614,10 @@ CheckList.prototype = {
         else {
             this.newItem();
         }
-            
-        this.buildMenu();
+        
+        let switchTypeMenuItem = new PopupMenu.PopupMenuItem("Switch to regular note");
+        this.contentMenuSection.addMenuItem(switchTypeMenuItem);
+        switchTypeMenuItem.connect("activate", Lang.bind(this, this.switchType));
     },
     
     addItem: function(itemInfo, insertAfter) {
@@ -600,11 +643,27 @@ CheckList.prototype = {
     },
     
     getInfo: function() {
-        let info = { type: "checklist", x: this.actor.x, y: this.actor.y, theme: this.theme, items: [] };
-        for ( var i = 0; i < this.items.length; i++ ) {
-            info.items.push({ completed: this.items[i].completed, text: this.items[i].text });
-        }
+        let info = { x: this.actor.x, y: this.actor.y, theme: this.theme };
         if ( this.title ) info.title = this.title;
+        
+        if ( this.switching ) {
+            info.type = "note";
+            let text = "";
+            for ( let item of this.items ) {
+                if ( item.text == "" ) continue;
+                text += (item.completed) ? "+" : "-";
+                text += item.text + "\n";
+            }
+            info.text = text;
+        }
+        else {
+            info.type = "checklist";
+            info.items = [];
+            for ( let item of this.items ) {
+                if ( item.text != "" ) info.items.push({ completed: item.completed, text: item.text });
+            }
+        }
+        
         return info;
     },
     
@@ -768,6 +827,11 @@ CheckList.prototype = {
                 this.addItem({ text: newText, completed: false });
             }
         }));
+    },
+    
+    switchType: function() {
+        this.switching = true;
+        this.emit("changed", true);
     }
 }
 
@@ -917,15 +981,22 @@ NoteBox.prototype = {
         this.update();
     },
     
-    update: function() {
+    removeAll: function() {
+        for ( let note of this.notes ) note.destroy();
+        this.notes = [];
+    },
+    
+    update: function(item, refresh) {
         let notesData = [];
         for ( let i = 0; i < this.notes.length; i++ )
             notesData.push(this.notes[i].getInfo());
         settings.saveNotes(notesData);
+        if ( refresh ) this.initializeNotes();
     },
     
     initializeNotes: function() {
         try {
+            this.removeAll();
             for ( let i = 0; i < settings.storedNotes.length; i++ ) {
                 let noteInfo = settings.storedNotes[i];
                 //make sure it doesn't break anything on upgrade
