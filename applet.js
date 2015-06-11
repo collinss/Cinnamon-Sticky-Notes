@@ -206,15 +206,18 @@ NoteBase.prototype = {
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         
-        let about = new Applet.MenuItem(_("About..."), "dialog-question", Lang.bind(applet, applet.openAbout))
+        let about = new PopupMenu.PopupIconMenuItem(_("About..."), "dialog-question", St.IconType.SYMBOLIC);
+        about.connect("activate", Lang.bind(applet, applet.openAbout));
         this.menu.addMenuItem(about);
         
-        let configure = new Applet.MenuItem("Configure...", "system-run", Lang.bind(this, function() {
+        let configure = new PopupMenu.PopupIconMenuItem("Configure...", "system-run", St.IconType.SYMBOLIC);
+        configure.connect("activate", Lang.bind(this, function() {
             Util.spawnCommandLine("cinnamon-settings applets " + applet.metadata.uuid + " " + applet.instanceId);
         }));
         this.menu.addMenuItem(configure);
         
-        let remove = new Applet.MenuItem("Remove this note", "edit-delete", Lang.bind(this, function() {
+        let remove = new PopupMenu.PopupIconMenuItem("Remove this note", "edit-delete", St.IconType.SYMBOLIC);
+        remove.connect("activate", Lang.bind(this, function() {
             this.emit("destroy", this);
         }));
         this.menu.addMenuItem(remove);
