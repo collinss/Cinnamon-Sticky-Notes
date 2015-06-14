@@ -43,6 +43,21 @@ const THEMES = {
 let applet, noteBox, componentManager;
 
 
+function focusText(actor) {
+    let currentMode = global.stage_input_mode;
+    if ( currentMode == Cinnamon.StageInputMode.FOCUSED && actor.has_key_focus() ) return;
+    // if ( !this.previousMode ) this.previousMode = currentMode;
+    if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
+        global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+    }
+    
+    actor.grab_key_focus();
+    if ( settings.raisedState && settings.lowerOnClick ) {
+        global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
+    }
+}
+
+
 function ComponentManager() {
     this._init();
 }
@@ -438,10 +453,10 @@ Note.prototype = {
         }
         
         if ( event.get_source() == this.text ) {
-            if ( !settings.raisedState ) this.focusText();
+            if ( !settings.raisedState ) focusText();
         }
         else {
-            this.focusText();
+            focusText();
             this.text.cursor_position = this.text.selection_bound = this.text.text.length;
         }
         
@@ -495,20 +510,6 @@ Note.prototype = {
     onTextFocused: function() {
         if ( !this.unfocusId ) this.unfocusId = this.text.connect("key-focus-out", Lang.bind(this, this.unfocusText));
         this.actor.add_style_pseudo_class("focus");
-    },
-    
-    focusText: function() {
-        let currentMode = global.stage_input_mode;
-        if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.textBox.has_key_focus() ) return;
-        if ( !this.previousMode ) this.previousMode = currentMode;
-        if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
-            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
-        }
-        
-        this.textBox.grab_key_focus();
-        if ( settings.raisedState && settings.lowerOnClick ) {
-            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
-        }
     },
     
     unfocusText: function() {
@@ -677,10 +678,10 @@ CheckList.prototype = {
         }
         
         if ( event.get_source() == this.text ) {
-            if ( !settings.raisedState ) this.focusText();
+            if ( !settings.raisedState ) focusText();
         }
         else {
-            this.focusText();
+            focusText();
             this.text.cursor_position = this.text.selection_bound = this.text.text.length;
         }
         
@@ -961,14 +962,14 @@ NoteBox.prototype = {
         let note = this.addNote("note", null);
         this.update();
         this.raiseNotes();
-        Mainloop.idle_add(Lang.bind(note, note.focusText));
+        focusText(note.textBox);
     },
     
     newCheckList: function() {
         let note = this.addNote("checklist", null);
         this.update();
         this.raiseNotes();
-        // Mainloop.idle_add(Lang.bind(note, note.focusText));
+        focusText(note.items[0].entry)
     },
     
     removeNote: function(note) {
