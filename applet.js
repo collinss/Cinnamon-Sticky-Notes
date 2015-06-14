@@ -452,13 +452,9 @@ Note.prototype = {
             return false;
         }
         
-        if ( event.get_source() == this.text ) {
-            if ( !settings.raisedState ) focusText();
-        }
-        else {
-            focusText();
+        if ( event.get_source() != this.text ) 
             this.text.cursor_position = this.text.selection_bound = this.text.text.length;
-        }
+        focusText(this.text);
         
         return false;
     },
@@ -677,12 +673,20 @@ CheckList.prototype = {
             return false;
         }
         
-        if ( event.get_source() == this.text ) {
-            if ( !settings.raisedState ) focusText();
+        for ( let item of this.items ) {
+            if ( event.get_source() == item.entry.clutter_text ) {
+                focusText(item.entry);
+                return false;
+            }
+        }
+        
+        let lastItem = this.items[this.items.length-1];
+        if ( lastItem.entry.text == "" ) {
+            focusText(lastItem.entry);
         }
         else {
-            focusText();
-            this.text.cursor_position = this.text.selection_bound = this.text.text.length;
+            let newItem = this.newItem();
+            focusText(newItem.entry);
         }
         
         return false;
