@@ -245,9 +245,29 @@ NoteBase.prototype = {
     },
     
     updateDnD: function() {
-        // FIXME
-        // if ( this.text.has_pointer ) this.draggable.inhibit = true;
-        // else this.draggable.inhibit = false;
+    },
+    
+    toggleMenu: function() {
+        this.menu.toggle();
+        
+        //make sure menu is positioned correctly
+        let rightEdge;
+        for ( let i = 0; i < Main.layoutManager.monitors.length; i++ ) {
+            let monitor = Main.layoutManager.monitors[i];
+            
+            if ( monitor.x <= this.actor.x &&
+                 monitor.y <= this.actor.y &&
+                 monitor.x + monitor.width > this.actor.x &&
+                 monitor.y + monitor.height > this.actor.y ) {
+                
+                rightEdge = monitor.x + monitor.width;
+                break;
+            }
+        }
+        
+        if ( this.actor.x + this.actor.width + this.menu.actor.width > rightEdge )
+            this.menu.setArrowSide(St.Side.RIGHT);
+        else this.menu.setArrowSide(St.Side.LEFT);
     },
     
     destroy: function(){
@@ -430,27 +450,7 @@ Note.prototype = {
     
     onButtonPress: function(actor, event) {
         if ( event.get_button() == 3 ) {
-            this.menu.toggle();
-            
-            //make sure menu is positioned correctly
-            let rightEdge;
-            for ( let i = 0; i < Main.layoutManager.monitors.length; i++ ) {
-                let monitor = Main.layoutManager.monitors[i];
-                
-                if ( monitor.x <= this.actor.x &&
-                     monitor.y <= this.actor.y &&
-                     monitor.x + monitor.width > this.actor.x &&
-                     monitor.y + monitor.height > this.actor.y ) {
-                    
-                    rightEdge = monitor.x + monitor.width;
-                    break;
-                }
-            }
-            
-            if ( this.actor.x + this.actor.width + this.menu.actor.width > rightEdge )
-                this.menu.setArrowSide(St.Side.RIGHT);
-            else this.menu.setArrowSide(St.Side.LEFT);
-            
+            this.toggleMenu();
             return true;
         }
         
@@ -485,6 +485,11 @@ Note.prototype = {
             let desiredPosition = cursorY + geometry.height*3;
             adjustment.set_value(( desiredPosition < textHeight ? desiredPosition : textHeight ) - scrollHeight);
         }
+    },
+    
+    updateDnD: function() {
+        if ( this.text.has_pointer ) this.draggable.inhibit = true;
+        else this.draggable.inhibit = false;
     },
     
     onTextFocused: function() {
@@ -623,6 +628,7 @@ CheckList.prototype = {
         }
         else this.items.push(item);
         item.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
+        item.entry.connect("button-press-event", Lang.bind(this, this.onButtonPress));
 
         return item;
     },
@@ -683,27 +689,7 @@ CheckList.prototype = {
     
     onButtonPress: function(actor, event) {
         if ( event.get_button() == 3 ) {
-            this.menu.toggle();
-            
-            //make sure menu is positioned correctly
-            let rightEdge;
-            for ( let i = 0; i < Main.layoutManager.monitors.length; i++ ) {
-                let monitor = Main.layoutManager.monitors[i];
-                
-                if ( monitor.x <= this.actor.x &&
-                     monitor.y <= this.actor.y &&
-                     monitor.x + monitor.width > this.actor.x &&
-                     monitor.y + monitor.height > this.actor.y ) {
-                    
-                    rightEdge = monitor.x + monitor.width;
-                    break;
-                }
-            }
-            
-            if ( this.actor.x + this.actor.width + this.menu.actor.width > rightEdge )
-                this.menu.setArrowSide(St.Side.RIGHT);
-            else this.menu.setArrowSide(St.Side.LEFT);
-            
+            this.toggleMenu();
             return true;
         }
         
@@ -795,6 +781,17 @@ CheckList.prototype = {
         return false;
     },
     
+    updateDnD: function() {
+        for ( let item of items ) {
+            if ( item.text.has_pointer ) {
+                this.draggable.inhibit = true;
+                return;
+            }
+        }
+        
+        this.draggable.inhibit = false;
+    },
+    
     copy: function() {
         let text = "";
         for ( let item of this.items ) {
@@ -850,8 +847,26 @@ CheckListItem.prototype = {
             this.checkBox.actor.checked = info.completed;
             this.entry.text = info.text;
         }
+        
+        this.entry.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
     },
 
+    onButtonRelease: function() {
+        if ( event.get_button() == 3 ) return true;
+        
+        let currentMode = global.stage_input_mode;
+        if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.textBox.has_key_focus() ) return;
+        if ( !this.previousMode ) this.previousMode = currentMode;
+        if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
+        }
+        
+        this.entry.grab_key_focus();
+        if ( settings.raisedState && settings.lowerOnClick ) {
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
+        }
+    },
+    
     get completed() {
         return this.checkBox.actor.checked;
     },
