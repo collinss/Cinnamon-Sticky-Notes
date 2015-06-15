@@ -625,8 +625,9 @@ CheckList.prototype = {
         }
         else this.items.push(item);
         item.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
-        item.entry.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-
+        item.entry.clutter_text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+        item.entry.clutter_text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+        
         return item;
     },
     
@@ -700,7 +701,7 @@ CheckList.prototype = {
         
         if ( this.menu.isOpen ) this.menu.close();
         
-        if ( actor == this.text ) {
+        if ( actor == this.entry.clutter_text ) {
             if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
             global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
             Clutter.grab_pointer(this.text);
@@ -852,26 +853,8 @@ CheckListItem.prototype = {
             this.checkBox.actor.checked = info.completed;
             this.entry.text = info.text;
         }
-        
-        this.entry.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
     },
 
-    onButtonRelease: function() {
-        if ( event.get_button() == 3 ) return true;
-        
-        let currentMode = global.stage_input_mode;
-        if ( currentMode == Cinnamon.StageInputMode.FOCUSED && this.textBox.has_key_focus() ) return;
-        if ( !this.previousMode ) this.previousMode = currentMode;
-        if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
-            global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
-        }
-        
-        this.entry.grab_key_focus();
-        if ( settings.raisedState && settings.lowerOnClick ) {
-            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
-        }
-    },
-    
     get completed() {
         return this.checkBox.actor.checked;
     },
