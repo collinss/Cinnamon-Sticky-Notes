@@ -838,16 +838,24 @@ function CheckListItem(info) {
 
 CheckListItem.prototype = {
     _init: function(info) {
-        this.actor = new St.BoxLayout();
+        this.actor = new Cinnamon.GenericContainer();
         this.actor._delegate = this;
+        
+        this.actor.connect("allocate", Lang.bind(this, this.allocate));
+        this.actor.connect("get-preferred-height", Lang.bind(this, this.getPreferedHeight));
+        this.actor.connect("get-preferred-width", Lang.bind(this, this.getPreferedWidth));
         
         this.checkBox = new CheckBox.CheckBox("", { style_class: "sticky-checkBox" });
         this.actor.add_actor(this.checkBox.actor);
         this.entry = new St.Entry();
-        this.actor.add(this.entry, { expand: true });
+        this.actor.add_actor(this.entry);
 
         this.clutterText = this.entry.clutter_text;
         this.clutterText._delegate = this;
+        this.clutterText.ellipsize = Pango.EllipsizeMode.NONE;
+        this.clutterText.set_single_line_mode(false);
+        this.clutterText.line_wrap = true;
+        this.clutterText.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
 
         if ( info ) {
             this.checkBox.actor.checked = info.completed;
@@ -855,6 +863,58 @@ CheckListItem.prototype = {
         }
     },
 
+    allocate: function(actor, box, flags) {
+        let height = box.y2 - box.y1;
+        
+        let cbBox = new Clutter.ActorBox();
+        let cbHeight = this.checkBox.actor.get_preferred_height(0)[1];
+        
+        cbBox.x1 = box.x1;
+        cbBox.x2 = box.x1 + this.checkBox.actor.get_preferred_width(0)[1];
+        if ( height <= cbHeight ) {
+            cbBox.y1 = box.y1;
+            cbBox.y2 = box.y2;
+        }
+        else {
+            cbBox.y1 = box.y1 + (height - cbHeight) / 2;
+            cbBox.y2 = cbBox.y1 + cbHeight;
+        }
+        
+        let eBox = new Clutter.ActorBox();
+        let eHeight = this.entry.get_preferred_height(box.x2 - cbBox.x2 + 1)[1];
+        
+        eBox.x1 = cbBox.x2 + 1;
+        eBox.x2 = box.x2;
+        if ( height <= eHeight ) {
+            eBox.y1 = box.y1;
+            eBox.y2 = box.y2;
+        }
+        else {
+            eBox.y1 = box.y1 + (height - eHeight) / 2;
+            eBox.y2 = eBox.y1 + eHeight;
+        }
+        
+        this.checkBox.actor.allocate(cbBox, flags);
+        this.entry.allocate(eBox, flags);
+    },
+    
+    getPreferedHeight: function(actor, forWidth, alloc) {
+        let checkBoxWidth = this.checkBox.actor.get_preferred_width(0)[1];
+        let [entryMin, entryNat] = this.entry.get_preferred_height(forWidth - checkBoxWidth);
+        let [checkBoxMin, checkBoxNat] = this.checkBox.actor.get_preferred_height(forWidth);
+        
+        alloc.min_size = Math.max(checkBoxMin, entryMin);
+        alloc.natural_size = Math.max(checkBoxNat, entryNat);
+    },
+    
+    getPreferedWidth: function(actor, forHeight, alloc) {
+        let [checkBoxMin, checkBoxNat] = this.checkBox.actor.get_preferred_width(0);
+        let [entryMin, entryNat] = this.entry.get_preferred_width(0);
+        
+        alloc.min_size = checkBoxMin + entryMin;
+        alloc.natural_size = checkBoxNat + entryNat;
+    },
+    
     get completed() {
         return this.checkBox.actor.checked;
     },
