@@ -21,6 +21,10 @@
     background-image: url("icons/checkbox-checked.svg");
 }
 
+.sticky-checkList-itemBox {
+    spacing: 5px;
+}
+
 
 /*Mint-X theme*/
 .green-noteBox {

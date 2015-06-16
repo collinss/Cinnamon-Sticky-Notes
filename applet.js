@@ -598,7 +598,7 @@ CheckList.prototype = {
         this.scrollBox = new St.ScrollView();
         this.actor.add_actor(this.scrollBox);
         
-        this.itemBox = new St.BoxLayout({ vertical: true });
+        this.itemBox = new St.BoxLayout({ vertical: true, style_class: "sticky-checkList-itemBox" });
         this.scrollBox.add_actor(this.itemBox);
         
         if ( info && info.items ) {
