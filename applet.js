@@ -613,6 +613,10 @@ CheckList.prototype = {
         let switchTypeMenuItem = new PopupMenu.PopupMenuItem("Switch to regular note");
         this.contentMenuSection.addMenuItem(switchTypeMenuItem);
         switchTypeMenuItem.connect("activate", Lang.bind(this, this.switchType));
+        
+        let removeCompleteMenuItem = new PopupMenu.PopupMenuItem("Remove completed items");
+        this.contentMenuSection.addMenuItem(removeCompleteMenuItem);
+        removeCompleteMenuItem.connect("activate", Lang.bind(this, this.removeComplete));
     },
     
     addItem: function(itemInfo, insertAfter) {
@@ -637,6 +641,21 @@ CheckList.prototype = {
         let item = this.addItem(info, insertAfter);
         
         return item;
+    },
+    
+    removeItem: function(item) {
+        this.itemBox.remove_actor(item.actor);
+        this.items.splice(this.items.indexOf(item), 1);
+    },
+    
+    removeComplete: function() {
+        for ( let i = 0; i < this.items.length; ) {
+            if ( this.items[i].completed ) this.removeItem(this.items[i]);
+            else i++;
+        }
+        
+        if ( this.items.length == 0 ) this.newItem();
+        this.emit("changed");
     },
     
     getInfo: function() {
