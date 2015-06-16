@@ -601,7 +601,7 @@ CheckList.prototype = {
         this.itemBox = new St.BoxLayout({ vertical: true, style_class: "sticky-checkList-itemBox" });
         this.scrollBox.add_actor(this.itemBox);
         
-        if ( info && info.items ) {
+        if ( info && info.items && info.items.length > 0 ) {
             for ( let item of info.items ) {
                 this.addItem(item);
             }
@@ -631,7 +631,9 @@ CheckList.prototype = {
         item.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
         item.entry.clutter_text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
         item.entry.clutter_text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+        item.checkBox.actor.connect("clicked", Lang.bind(this, function() { this.emit("changed"); }));
         
+        this.emit("changed");
         return item;
     },
     
@@ -738,7 +740,7 @@ CheckList.prototype = {
         switch ( keyCode ) {
             case Clutter.Return:
             case Clutter.KP_Enter:
-                if ( item.entry.text.length == 0 ) return false;
+                if ( item.entry.text.length == 0 ) return true;
                 let newItemText = "";
                 if ( position != -1 ) {
                     newItemText = String(item.entry.text.slice(position));
@@ -747,9 +749,12 @@ CheckList.prototype = {
                 let newItem = this.newItem(item, newItemText);
                 newItem.entry.grab_key_focus();
                 newItem.entry.clutter_text.position = newItem.entry.clutter_text.selection_bound = 0;
+                
+                this.emit("changed");
                 return true;
             case Clutter.BackSpace:
-                if ( index != 0 && (position == 0 || (position == -1 && item.text.length == 0)) ) {
+                if ( index != 0 && ( position == item.clutterText.selection_bound ) &&
+                     (position == 0 || (position == -1 && item.text.length == 0)) ) {
                     let prevItem = this.items[index-1];
                     let text = item.text;
                     let pos = (text.length == 0) ? -1 : prevItem.entry.text.length;
@@ -758,11 +763,14 @@ CheckList.prototype = {
                     prevItem.entry.text += text;
                     prevItem.entry.grab_key_focus();
                     prevItem.entry.clutter_text.position = prevItem.entry.clutter_text.selection_bound = pos;
+                    
+                    this.emit("changed");
                     return true;
                 }
                 break;
             case Clutter.Delete:
-                if ( index < this.items.length - 1 && (position == -1) ) {
+                if ( index < this.items.length - 1 && ( position == item.clutterText.selection_bound ) &&
+                     (position == -1) ) {
                     let newPos = item.entry.text.length;
                     let nextItem = this.items[index+1];
                     let text = nextItem.text;
@@ -770,6 +778,8 @@ CheckList.prototype = {
                     this.items.splice(index+1, 1);
                     item.entry.text += text;
                     item.entry.clutter_text.position = item.entry.clutter_text.selection_bound = newPos;
+                    
+                    this.emit("changed");
                     return true;
                 }
                 break;
@@ -777,6 +787,8 @@ CheckList.prototype = {
                 if ( index > 0 ) {
                     this.items[index-1].entry.grab_key_focus();
                     this.items[index-1].entry.clutter_text.position = this.items[index-1].entry.clutter_text.selection_bound = position;
+                    
+                    this.emit("changed");
                     return true;
                 }
                 break;
@@ -784,6 +796,8 @@ CheckList.prototype = {
                 if ( index < this.items.length - 1 ) {
                     this.items[index+1].entry.grab_key_focus();
                     this.items[index+1].entry.clutter_text.position = this.items[index+1].entry.clutter_text.selection_bound = position;
+                    
+                    this.emit("changed");
                     return true;
                 }
                 break;
@@ -791,6 +805,8 @@ CheckList.prototype = {
                 if ( position == 0 && index > 0 ) {
                     this.items[index-1].entry.grab_key_focus();
                     this.items[index-1].entry.clutter_text.position = this.items[index-1].entry.clutter_text.selection_bound = -1;
+                    
+                    this.emit("changed");
                     return true;
                 }
                 break;
@@ -798,11 +814,14 @@ CheckList.prototype = {
                 if ( position == -1 && index < this.items.length - 1 ) {
                     this.items[index+1].entry.grab_key_focus();
                     this.items[index+1].entry.clutter_text.position = this.items[index+1].entry.clutter_text.selection_bound = 0;
+                    
+                    this.emit("changed");
                     return true;
                 }
                 break;
         }
         
+        this.emit("changed");
         return false;
     },
     
@@ -841,6 +860,7 @@ CheckList.prototype = {
                 if ( newText == "" ) continue;
                 this.addItem({ text: newText, completed: false });
             }
+            this.emit("changed");
         }));
     },
     
@@ -942,7 +962,6 @@ CheckListItem.prototype = {
         return this.entry.text;
     }
 }
-Signals.addSignalMethods(CheckListItem.prototype);
 
 
 function NoteBox() {
