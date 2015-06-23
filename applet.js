@@ -886,7 +886,7 @@ CheckListItem.prototype = {
         
         this.checkBox = new CheckBox.CheckBox("", { style_class: "sticky-checkBox" });
         this.actor.add_actor(this.checkBox.actor);
-        this.entry = new St.Entry();
+        this.entry = new St.Entry({ style_class: "sticky-checkList-entry" });
         this.actor.add_actor(this.entry);
 
         this.clutterText = this.entry.clutter_text;
@@ -900,6 +900,14 @@ CheckListItem.prototype = {
             this.checkBox.actor.checked = info.completed;
             this.entry.text = info.text;
         }
+        
+        this.checkBox.actor.connect("clicked", Lang.bind(this, this.updateCheckedState));
+        this.updateCheckedState();
+    },
+    
+    updateCheckedState: function() {
+        if ( this.checkBox.actor.checked ) this.entry.add_style_pseudo_class("checked");
+        else this.entry.remove_style_pseudo_class("checked");
     },
 
     allocate: function(actor, box, flags) {

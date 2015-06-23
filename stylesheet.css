@@ -25,6 +25,10 @@
     spacing: 5px;
 }
 
+.sticky-checkList-entry:checked {
+    text-decoration: line-through;
+}
+
 
 /*Mint-X theme*/
 .green-noteBox {
