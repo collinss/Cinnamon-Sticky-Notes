@@ -632,6 +632,7 @@ CheckList.prototype = {
         item.entry.clutter_text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
         item.entry.clutter_text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
         item.checkBox.actor.connect("clicked", Lang.bind(this, function() { this.emit("changed"); }));
+        item.entry.clutter_text.connect("key-focus-in", Lang.bind(this, this.onFocusIn));
         
         this.emit("changed");
         return item;
@@ -823,6 +824,13 @@ CheckList.prototype = {
         
         this.emit("changed");
         return false;
+    },
+    
+    onFocusIn: function(actor) {
+        actor.focusId = actor.connect("key-focus-out", Lang.bind(this, function(actor) {
+            if ( actor.text.length == 0 && this.items.length > 1 ) this.removeItem(actor._delegate);
+            actor.disconnect(actor.focusId);
+        }));
     },
     
     updateDnD: function() {
