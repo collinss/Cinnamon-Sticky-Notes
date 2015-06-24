@@ -628,6 +628,7 @@ CheckList.prototype = {
             this.items.splice(this.items.indexOf(insertAfter)+1, 0, item);
         }
         else this.items.push(item);
+        
         item.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
         item.entry.clutter_text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
         item.entry.clutter_text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
@@ -689,6 +690,7 @@ CheckList.prototype = {
     onButtonRelease: function(actor, event) {
         if ( event.get_button() == 3 ) return true;
         
+        // clean up from onButtonPress
         if ( this.pointerGrabbed ) {
             global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
             Clutter.ungrab_pointer();
@@ -696,6 +698,7 @@ CheckList.prototype = {
             return false;
         }
         
+        // make sure the text actually gets focus
         for ( let item of this.items ) {
             if ( event.get_source() == item.entry.clutter_text ) {
                 focusText(item.entry);
@@ -703,6 +706,19 @@ CheckList.prototype = {
             }
         }
         
+        // Dont do anything if we click on the title
+        let yEvent = event.get_coords()[1];
+        if ( yEvent < this.itemBox.get_transformed_position()[1] ) return false;
+        
+        // if we miss all the clutter text, it still makes more sense to grab the nearest one
+        for ( let item of this.items ) {
+            if ( yEvent < (item.actor.get_transformed_position()[1] + item.actor.height) ) {
+                focusText(item.entry);
+                return true;
+            }
+        }
+        
+        // if we are below the last entry, create a new one (or focus the last one if it is empty)
         let lastItem = this.items[this.items.length-1];
         if ( lastItem.entry.text == "" ) {
             focusText(lastItem.entry);
@@ -712,7 +728,7 @@ CheckList.prototype = {
             focusText(newItem.entry);
         }
         
-        return false;
+        return true;
     },
     
     onButtonPress: function(actor, event) {
