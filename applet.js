@@ -739,10 +739,10 @@ CheckList.prototype = {
         
         if ( this.menu.isOpen ) this.menu.close();
         
-        if ( actor == this.entry.clutter_text ) {
+        if ( actor instanceof Clutter.Text ) {
             if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
             global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
-            Clutter.grab_pointer(this.text);
+            Clutter.grab_pointer(actor);
             this.pointerGrabbed = true;
         }
         
