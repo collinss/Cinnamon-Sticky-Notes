@@ -850,7 +850,7 @@ CheckList.prototype = {
     },
     
     updateDnD: function() {
-        for ( let item of items ) {
+        for ( let item of this.items ) {
             if ( item.text.has_pointer ) {
                 this.draggable.inhibit = true;
                 return;
