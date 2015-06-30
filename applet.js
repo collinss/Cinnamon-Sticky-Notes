@@ -839,11 +839,15 @@ CheckList.prototype = {
                 break;
         }
         
+        if ( !this.idleId )
+            this.idleId = Mainloop.idle_add(Lang.bind(this, this.updateScrollPosition));
         if ( changed ) this.emit("changed");
         return blockEvent;
     },
     
     onFocusIn: function(actor) {
+        if ( !this.idleId )
+            this.idleId = Mainloop.idle_add(Lang.bind(this, this.updateScrollPosition));
         if ( !actor.focusId ) actor.focusId = actor.connect("key-focus-out", Lang.bind(this, this.onFocusOut));
     },
     
@@ -862,6 +866,27 @@ CheckList.prototype = {
         }
         
         this.draggable.inhibit = false;
+    },
+    
+    updateScrollPosition: function() {
+        this.idleId = null;
+        
+        let focusedItem;
+        for ( let item of this.items ) {
+            if ( item.clutterText.has_key_focus() ) {
+                focusedItem = item;
+                break;
+            }
+        }
+        if ( !focusedItem ) return;
+        
+        let scrollHeight = this.scrollBox.allocation.get_height();
+        let adjustment = this.itemBox.vadjustment;
+        let actorStart = focusedItem.actor.allocation.y1;
+        let actorEnd = focusedItem.actor.allocation.y2;
+        
+        if ( actorStart < adjustment.value ) adjustment.set_value(actorStart);
+        else if ( actorEnd > adjustment.value + scrollHeight ) adjustment.set_value(actorEnd - scrollHeight);
     },
     
     copy: function() {
