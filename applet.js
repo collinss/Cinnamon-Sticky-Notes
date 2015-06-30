@@ -705,7 +705,7 @@ CheckList.prototype = {
         // make sure the text actually gets focus
         for ( let item of this.items ) {
             if ( event.get_source() == item.clutterText ) {
-                focusText(item.entry);
+                focusText(item.clutterText);
                 return false;
             }
         }
@@ -717,7 +717,7 @@ CheckList.prototype = {
         // if we miss all the clutter text, it still makes more sense to grab the nearest one
         for ( let item of this.items ) {
             if ( yEvent < (item.actor.get_transformed_position()[1] + item.actor.height) ) {
-                focusText(item.entry);
+                focusText(item.clutterText);
                 return true;
             }
         }
@@ -725,11 +725,11 @@ CheckList.prototype = {
         // if we are below the last entry, create a new one (or focus the last one if it is empty)
         let lastItem = this.items[this.items.length-1];
         if ( lastItem.entry.text == "" ) {
-            focusText(lastItem.entry);
+            focusText(lastItem.clutterText);
         }
         else {
             let newItem = this.newItem();
-            focusText(newItem.entry);
+            focusText(newItem.clutterText);
         }
         
         return true;
