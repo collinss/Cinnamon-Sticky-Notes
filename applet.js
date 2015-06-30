@@ -629,11 +629,11 @@ CheckList.prototype = {
         }
         else this.items.push(item);
         
-        item.entry.clutter_text.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
-        item.entry.clutter_text.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-        item.entry.clutter_text.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
+        item.clutterText.connect("key-press-event", Lang.bind(this, this.handleKeyPress));
+        item.clutterText.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+        item.clutterText.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
         item.checkBox.actor.connect("clicked", Lang.bind(this, function() { this.emit("changed"); }));
-        item.entry.clutter_text.connect("key-focus-in", Lang.bind(this, this.onFocusIn));
+        item.clutterText.connect("key-focus-in", Lang.bind(this, this.onFocusIn));
         
         this.emit("changed");
         return item;
@@ -648,7 +648,11 @@ CheckList.prototype = {
     },
     
     removeItem: function(item) {
-        this.itemBox.remove_actor(item.actor);
+        if ( !item.actor ) return;
+        
+        let text = item.clutterText;
+        if ( text.focusId ) text.disconnect(text.focusId);
+        item.actor.destroy();
         this.items.splice(this.items.indexOf(item), 1);
     },
     
@@ -700,7 +704,7 @@ CheckList.prototype = {
         
         // make sure the text actually gets focus
         for ( let item of this.items ) {
-            if ( event.get_source() == item.entry.clutter_text ) {
+            if ( event.get_source() == item.clutterText ) {
                 focusText(item.entry);
                 return false;
             }
@@ -754,6 +758,8 @@ CheckList.prototype = {
         let index = this.items.indexOf(item);
         let keyCode = event.get_key_symbol();
         let position = item.clutterText.cursor_position;
+        let blockEvent = false;
+        let changed = false;
         switch ( keyCode ) {
             case Clutter.Return:
             case Clutter.KP_Enter:
@@ -764,26 +770,26 @@ CheckList.prototype = {
                     item.entry.text = item.entry.text.slice(0, position);
                 }
                 let newItem = this.newItem(item, newItemText);
-                newItem.entry.grab_key_focus();
-                newItem.entry.clutter_text.position = newItem.entry.clutter_text.selection_bound = 0;
+                focusText(newItem.clutterText);
+                newItem.clutterText.position = newItem.clutterText.selection_bound = 0;
                 
-                this.emit("changed");
-                return true;
+                changed = true;
+                blockEvent = true;
+                break;
             case Clutter.BackSpace:
                 if ( index != 0 && ( position == item.clutterText.selection_bound ) &&
                      (position == 0 || (position == -1 && item.text.length == 0)) ) {
                     let prevItem = this.items[index-1];
                     let text = item.text;
                     let pos = (text.length == 0) ? -1 : prevItem.entry.text.length;
-                    this.itemBox.remove_actor(item.actor);
-                    this.items.splice(index, 1);
                     prevItem.entry.text += text;
-                    prevItem.entry.grab_key_focus();
-                    prevItem.entry.clutter_text.position = prevItem.entry.clutter_text.selection_bound = pos;
+                    this.removeItem(item);
+                    focusText(prevItem.clutterText);
+                    prevItem.clutterText.position = prevItem.clutterText.selection_bound = pos;
                     
-                    this.emit("changed");
-                    return true;
+                    blockEvent = true;
                 }
+                changed = true;
                 break;
             case Clutter.Delete:
                 if ( index < this.items.length - 1 && ( position == item.clutterText.selection_bound ) &&
@@ -791,62 +797,60 @@ CheckList.prototype = {
                     let newPos = item.entry.text.length;
                     let nextItem = this.items[index+1];
                     let text = nextItem.text;
-                    this.itemBox.remove_actor(nextItem.actor);
-                    this.items.splice(index+1, 1);
+                    this.removeItem(nextItem);
                     item.entry.text += text;
-                    item.entry.clutter_text.position = item.entry.clutter_text.selection_bound = newPos;
+                    item.clutterText.position = item.clutterText.selection_bound = newPos;
                     
-                    this.emit("changed");
-                    return true;
+                    blockEvent = true;
                 }
+                changed = true;
                 break;
             case Clutter.Up:
                 if ( index > 0 ) {
-                    this.items[index-1].entry.grab_key_focus();
-                    this.items[index-1].entry.clutter_text.position = this.items[index-1].entry.clutter_text.selection_bound = position;
+                    focusText(this.items[index-1].clutterText);
+                    this.items[index-1].clutterText.position = this.items[index-1].clutterText.selection_bound = position;
                     
-                    this.emit("changed");
-                    return true;
+                    blockEvent = true;
                 }
                 break;
             case Clutter.Down:
                 if ( index < this.items.length - 1 ) {
-                    this.items[index+1].entry.grab_key_focus();
-                    this.items[index+1].entry.clutter_text.position = this.items[index+1].entry.clutter_text.selection_bound = position;
+                    focusText(this.items[index+1].clutterText);
+                    this.items[index+1].clutterText.position = this.items[index+1].clutterText.selection_bound = position;
                     
-                    this.emit("changed");
-                    return true;
+                    blockEvent = true;
                 }
                 break;
             case Clutter.Left:
                 if ( position == 0 && index > 0 ) {
-                    this.items[index-1].entry.grab_key_focus();
-                    this.items[index-1].entry.clutter_text.position = this.items[index-1].entry.clutter_text.selection_bound = -1;
+                    focusText(this.items[index-1].clutterText);
+                    this.items[index-1].clutterText.position = this.items[index-1].clutterText.selection_bound = -1;
                     
-                    this.emit("changed");
-                    return true;
+                    blockEvent = true;
                 }
                 break;
             case Clutter.Right:
                 if ( position == -1 && index < this.items.length - 1 ) {
-                    this.items[index+1].entry.grab_key_focus();
-                    this.items[index+1].entry.clutter_text.position = this.items[index+1].entry.clutter_text.selection_bound = 0;
+                    focusText(this.items[index+1].clutterText);
+                    this.items[index+1].clutterText.position = this.items[index+1].clutterText.selection_bound = 0;
                     
-                    this.emit("changed");
-                    return true;
+                    blockEvent = true;
                 }
                 break;
         }
         
-        this.emit("changed");
-        return false;
+        if ( changed ) this.emit("changed");
+        return blockEvent;
     },
     
     onFocusIn: function(actor) {
-        actor.focusId = actor.connect("key-focus-out", Lang.bind(this, function(actor) {
-            if ( actor.text.length == 0 && this.items.length > 1 ) this.removeItem(actor._delegate);
-            actor.disconnect(actor.focusId);
-        }));
+        if ( !actor.focusId ) actor.focusId = actor.connect("key-focus-out", Lang.bind(this, this.onFocusOut));
+    },
+    
+    onFocusOut: function(actor) {
+        if ( actor.text.length == 0 && this.items.length > 1 ) this.removeItem(actor._delegate);
+        actor.disconnect(actor.focusId);
+        actor.focusId = null;
     },
     
     updateDnD: function() {
@@ -863,7 +867,7 @@ CheckList.prototype = {
     copy: function() {
         let text = "";
         for ( let item of this.items ) {
-            let selectedText = item.entry.clutter_text.get_selection();
+            let selectedText = item.clutterText.get_selection();
             if ( selectedText != "" ) {
                 text = selectedText;
                 break;
