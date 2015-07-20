@@ -360,6 +360,13 @@ NoteBase.prototype = {
             this.titleMenuItem.label.text = "Edit title";
         }
         else this.titleMenuItem.label.text = "Add title";
+    },
+    
+    triggerUpdate: function() {
+        if ( !this.updateId ) Mainloop.idle_add(Lang.bind(this, function() {
+            this.emit("changed");
+            this.updateId = undefined;
+        }))
     }
 }
 Signals.addSignalMethods(NoteBase.prototype);
@@ -837,11 +844,14 @@ CheckList.prototype = {
                     blockEvent = true;
                 }
                 break;
+            default:
+                changed = true;
+                break;
         }
         
         if ( !this.idleId )
             this.idleId = Mainloop.idle_add(Lang.bind(this, this.updateScrollPosition));
-        if ( changed ) this.emit("changed");
+        if ( changed ) this.triggerUpdate();
         return blockEvent;
     },
     
