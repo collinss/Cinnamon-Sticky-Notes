@@ -25,6 +25,7 @@ const Util = imports.misc.util;
 const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
+const EDGE_WIDTH = 10;
 
 const THEMES = {
     "green": "Mint-X-Green",
@@ -173,7 +174,8 @@ NoteBase.prototype = {
             this.titleBin.add_actor(new St.Label({ text: this.title, style_class: "sticky-title" }));
         }
 
-        this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
+        this.actor.connect("motion-event", Lang.bind(this, this._onMotionEvent));
+        this.actor.connect("leave-event", Lang.bind(this, this._onLeave));
         this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
         this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
             
@@ -254,8 +256,31 @@ NoteBase.prototype = {
         this.trackMouse();
     },
     
-    updateDnD: function() {
+    _onMotionEvent: function(actor, event) {
+        let hasBottom = false;
+        let hasSide = false;
+        let [x, y] = event.get_coords();
+        let rightEdge = this.actor.x + this.actor.width;
+        let bottomEdge = this.actor.y + this.actor.height;
+        if ( x < rightEdge && rightEdge - x < EDGE_WIDTH ) hasSide = true;
+        if ( y < bottomEdge && bottomEdge - y < EDGE_WIDTH ) hasBottom = true;
+        
+        if ( hasBottom && hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM_RIGHT);
+        else if ( hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_RIGHT);
+        else if ( hasBottom ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM);
+        else if ( this.canSelect(x, y) ) global.set_cursor(Cinnamon.Cursor.TEXT);
+        else global.unset_cursor();
+        
+        this.updateDnD();
     },
+    
+    canSelect: function(x, y) { return false },
+    
+    _onLeave: function() {
+        global.unset_cursor();
+    },
+    
+    updateDnD: function() {},
     
     toggleMenu: function() {
         this.menu.toggle();
@@ -477,6 +502,10 @@ Note.prototype = {
         }
         
         return false;
+    },
+    
+    canSelect: function(x, y) {
+        return true;
     },
     
     handleScrollPosition: function(text, geometry) {
@@ -713,13 +742,15 @@ CheckList.prototype = {
         }
         
         // Dont do anything if we click on the title
-        let yEvent = event.get_coords()[1];
-        if ( yEvent < this.itemBox.get_transformed_position()[1] ) return false;
+        let [eventX, eventY] = event.get_coords();
+        if ( eventY < this.itemBox.get_transformed_position()[1] ) return false;
         
         // if we miss all the clutter text, it still makes more sense to grab the nearest one
         for ( let item of this.items ) {
-            if ( yEvent < (item.actor.get_transformed_position()[1] + item.actor.height) ) {
-                focusText(item.clutterText);
+            let [itemX, itemY] = item.entry.get_transformed_position();
+            if ( eventY < (itemY + item.entry.height) ) {
+                // we don't want to select if the pointer is left of the text
+                if ( eventX >= itemX ) focusText(item.clutterText);
                 return true;
             }
         }
@@ -751,6 +782,21 @@ CheckList.prototype = {
             Clutter.grab_pointer(actor);
             this.pointerGrabbed = true;
         }
+        
+        return false;
+    },
+    
+    canSelect: function(x, y) {
+        let firstItem = this.items[0];
+        if ( y < firstItem.entry.get_transformed_position()[1] ) return false;
+        
+        for ( let item of this.items ) {
+            let [itemX, itemY] = item.entry.get_transformed_position();
+            if ( y < (itemY + item.entry.height) && x >= itemX ) return true;
+        }
+        
+        let lastItem = this.items[this.items.length-1];
+        if ( y > (lastItem.entry.get_transformed_position()[1] + lastItem.entry.height) ) return true;
         
         return false;
     },
