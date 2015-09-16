@@ -1,7 +1,7 @@
 const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
+// const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const Meta = imports.gi.Meta;
 const Pango = imports.gi.Pango;
@@ -155,7 +155,10 @@ NoteBase.prototype = {
             else this.theme = settings.theme;
         }
         
-        this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: settings.height, width: settings.width });
+        let height = ( info && info.height ) ? info.height : settings.height;
+        let width = ( info && info.width ) ? info.width : settings.width;
+        
+        this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: height, width: width });
         this.actor._delegate = this;
         componentManager.addActor(this.actor);
         
@@ -173,14 +176,6 @@ NoteBase.prototype = {
         this.actor.connect("motion-event", Lang.bind(this, this.updateDnD));
         this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
         this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
-        settings.connect("height-changed", Lang.bind(this, function() {
-            this.actor.height = settings.height;
-            this.actor.que_relayout();
-        }));
-        settings.connect("width-changed", Lang.bind(this, function() {
-            this.actor.width = settings.width;
-            this.actor.que_relayout();
-        }));
             
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.LEFT, 0);
@@ -532,7 +527,7 @@ Note.prototype = {
     },
     
     getInfo: function() {
-        let info = { x: this.actor.x, y: this.actor.y, theme: this.theme };
+        let info = { x: this.actor.x, y: this.actor.y, height: this.actor.height, width: this.actor.width, theme: this.theme };
         if ( this.title ) info.title = this.title;
         
         if ( this.switching ) {
@@ -674,7 +669,7 @@ CheckList.prototype = {
     },
     
     getInfo: function() {
-        let info = { x: this.actor.x, y: this.actor.y, theme: this.theme };
+        let info = { x: this.actor.x, y: this.actor.y, height: this.actor.height, width: this.actor.width, theme: this.theme };
         if ( this.title ) info.title = this.title;
         
         if ( this.switching ) {

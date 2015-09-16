@@ -21,7 +21,7 @@
     
     "height": {
         "type": "scale",
-        "description": "Height",
+        "description": "Default height",
         "min": 100,
         "max": 500,
         "step": 10,
@@ -30,7 +30,7 @@
     
     "width": {
         "type": "scale",
-        "description": "Width",
+        "description": "Default width",
         "min": 100,
         "max": 500,
         "step": 10,
