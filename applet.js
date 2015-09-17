@@ -479,7 +479,7 @@ Note.prototype = {
             return false;
         }
         
-        if ( event.get_source() != this.text ) 
+        if ( event.get_source() != this.text && this.canSelect(event.get_coords()) )
             this.text.cursor_position = this.text.selection_bound = this.text.text.length;
         focusText(this.text);
         
@@ -505,7 +505,10 @@ Note.prototype = {
     },
     
     canSelect: function(x, y) {
-        return true;
+        // to do: fix click to be more intuitive at carat placement
+        if ( y >= this.text.get_transformed_position()[1] ) return true;
+        
+        return false;
     },
     
     handleScrollPosition: function(text, geometry) {
