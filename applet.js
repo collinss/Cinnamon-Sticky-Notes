@@ -506,7 +506,7 @@ Note.prototype = {
     
     canSelect: function(x, y) {
         // to do: fix click to be more intuitive at carat placement
-        if ( y >= this.text.get_transformed_position()[1] ) return true;
+        if ( y >= this.scrollBox.get_transformed_position()[1] ) return true;
         
         return false;
     },
@@ -791,7 +791,7 @@ CheckList.prototype = {
     
     canSelect: function(x, y) {
         let firstItem = this.items[0];
-        if ( y < firstItem.entry.get_transformed_position()[1] ) return false;
+        if ( y < this.scrollBox.get_transformed_position()[1] ) return false;
         
         for ( let item of this.items ) {
             let [itemX, itemY] = item.entry.get_transformed_position();
