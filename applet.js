@@ -480,7 +480,8 @@ Note.prototype = {
             return false;
         }
         
-        if ( event.get_source() != this.text && this.canSelect(event.get_coords()) ) {
+        let [x, y] = event.get_coords();
+        if ( event.get_source() != this.text && this.canSelect(x, y) ) {
             this.text.cursor_position = this.text.selection_bound = this.text.text.length;
             focusText(this.text);
         }
