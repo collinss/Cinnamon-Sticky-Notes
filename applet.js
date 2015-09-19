@@ -26,6 +26,8 @@ const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
 const EDGE_WIDTH = 10;
+const MIN_HEIGHT = 50;
+const MIN_WIDTH = 50;
 
 const THEMES = {
     "green": "Mint-X-Green",
@@ -179,7 +181,7 @@ NoteBase.prototype = {
         this.actor.connect("motion-event", Lang.bind(this, this._onMotionEvent));
         this.actor.connect("leave-event", Lang.bind(this, this._onLeave));
         this.actor.connect("button-release-event", Lang.bind(this, this.onButtonRelease));
-        this.actor.connect("button-press-event", Lang.bind(this, this.onButtonPress));
+        this.actor.connect("button-press-event", Lang.bind(this, this.checkResize));
             
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.LEFT, 0);
@@ -243,6 +245,43 @@ NoteBase.prototype = {
         this.emit("changed");
     },
     
+    checkResize: function(actor, event) {
+        // start resize if the mouse is in the right place
+        if ( this.hasBottom || this.hasSide ) {
+            this.isResizing = true;
+            Clutter.grab_pointer(this.actor);
+            if ( !this.eventId )
+                this.eventId = this.actor.connect("event", Lang.bind(this, this.handleResizeEvent));
+        }
+        else this.onButtonPress(actor, event);
+    },
+    
+    handleResizeEvent: function(actor, event) {
+        // update size now to give visual feedback
+        if ( event.type() == Clutter.EventType.MOTION ) {
+            let [x, y] = event.get_coords();
+            let [actorX, actorY] = this.actor.get_transformed_position();
+            
+            // determine new dimensions
+            let newHeight, newWdith;
+            if ( this.hasBottom ) {
+                newHeight = Math.round(y - actorY);
+                this.actor.height = (newHeight < MIN_HEIGHT) ? MIN_HEIGHT : newHeight;
+            }
+            if ( this.hasSide ) {
+                newWdith = Math.round(x - actorX);
+                this.actor.width = (newWdith < MIN_WIDTH) ? MIN_WIDTH : newWdith;
+            }
+        }
+        
+        // end resize on button release
+        if ( event.type() == Clutter.EventType.BUTTON_RELEASE ) {
+            this.isResizing = false;
+            Clutter.ungrab_pointer();
+            this.actor.disconnect(this.eventId);
+        }
+    },
+    
     _onDragBegin: function() {
         if ( !this.previousMode ) this.previousMode = global.stage_input_mode;
         global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
@@ -258,13 +297,14 @@ NoteBase.prototype = {
     },
     
     _onMotionEvent: function(actor, event) {
+        if ( this.isResizing ) return;
         this.hasBottom = false;
         this.hasSide = false;
         let [x, y] = event.get_coords();
         let rightEdge = this.actor.x + this.actor.width;
         let bottomEdge = this.actor.y + this.actor.height;
-        if ( x < rightEdge && rightEdge - x < EDGE_WIDTH ) hasSide = true;
-        if ( y < bottomEdge && bottomEdge - y < EDGE_WIDTH ) hasBottom = true;
+        if ( x < rightEdge && rightEdge - x < EDGE_WIDTH ) this.hasSide = true;
+        if ( y < bottomEdge && bottomEdge - y < EDGE_WIDTH ) this.hasBottom = true;
         
         this.draggable.inhibit = true;
         if ( this.hasBottom && this.hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM_RIGHT);
