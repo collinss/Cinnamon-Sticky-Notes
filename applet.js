@@ -479,9 +479,10 @@ Note.prototype = {
             return false;
         }
         
-        if ( event.get_source() != this.text && this.canSelect(event.get_coords()) )
+        if ( event.get_source() != this.text && this.canSelect(event.get_coords()) ) {
             this.text.cursor_position = this.text.selection_bound = this.text.text.length;
-        focusText(this.text);
+            focusText(this.text);
+        }
         
         return false;
     },
@@ -505,8 +506,9 @@ Note.prototype = {
     },
     
     canSelect: function(x, y) {
-        // to do: fix click to be more intuitive at carat placement
-        if ( y >= this.scrollBox.get_transformed_position()[1] ) return true;
+        if ( y >= this.scrollBox.get_transformed_position()[1] &&
+             x > this.text.get_transformed_position()[0] &&
+             x < (this.text.get_transformed_position()[0] + this.text.width) ) return true;
         
         return false;
     },
@@ -791,7 +793,8 @@ CheckList.prototype = {
     
     canSelect: function(x, y) {
         let firstItem = this.items[0];
-        if ( y < this.scrollBox.get_transformed_position()[1] ) return false;
+        if ( y < this.scrollBox.get_transformed_position()[1] ||
+             x > this.itemBox.get_transformed_position()[0] + this.itemBox.width ) return false;
         
         for ( let item of this.items ) {
             let [itemX, itemY] = item.entry.get_transformed_position();
