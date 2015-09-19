@@ -146,6 +146,8 @@ NoteBase.prototype = {
     _init: function(info) {
         this._dragging = false;
         this._dragOffset = [0, 0];
+        this.hasBottom = false;
+        this.hasSide = false;
         
         if ( info && info.theme ) this.theme = info.theme;
         else {
@@ -247,7 +249,6 @@ NoteBase.prototype = {
     },
     
     _onDragEnd: function() {
-        this.updateDnD();
         Main.popModal(this.actor, global.get_current_time());
         if ( this.previousMode ) {
             global.set_stage_input_mode(this.previousMode);
@@ -257,21 +258,23 @@ NoteBase.prototype = {
     },
     
     _onMotionEvent: function(actor, event) {
-        let hasBottom = false;
-        let hasSide = false;
+        this.hasBottom = false;
+        this.hasSide = false;
         let [x, y] = event.get_coords();
         let rightEdge = this.actor.x + this.actor.width;
         let bottomEdge = this.actor.y + this.actor.height;
         if ( x < rightEdge && rightEdge - x < EDGE_WIDTH ) hasSide = true;
         if ( y < bottomEdge && bottomEdge - y < EDGE_WIDTH ) hasBottom = true;
         
-        if ( hasBottom && hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM_RIGHT);
-        else if ( hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_RIGHT);
-        else if ( hasBottom ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM);
+        this.draggable.inhibit = true;
+        if ( this.hasBottom && this.hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM_RIGHT);
+        else if ( this.hasSide ) global.set_cursor(Cinnamon.Cursor.RESIZE_RIGHT);
+        else if ( this.hasBottom ) global.set_cursor(Cinnamon.Cursor.RESIZE_BOTTOM);
         else if ( this.canSelect(x, y) ) global.set_cursor(Cinnamon.Cursor.TEXT);
-        else global.unset_cursor();
-        
-        this.updateDnD();
+        else {
+            global.unset_cursor();
+            this.draggable.inhibit = false;
+        }
     },
     
     canSelect: function(x, y) { return false },
@@ -279,8 +282,6 @@ NoteBase.prototype = {
     _onLeave: function() {
         global.unset_cursor();
     },
-    
-    updateDnD: function() {},
     
     toggleMenu: function() {
         this.menu.toggle();
@@ -532,11 +533,6 @@ Note.prototype = {
             let desiredPosition = cursorY + geometry.height*3;
             adjustment.set_value(( desiredPosition < textHeight ? desiredPosition : textHeight ) - scrollHeight);
         }
-    },
-    
-    updateDnD: function() {
-        if ( this.text.has_pointer ) this.draggable.inhibit = true;
-        else this.draggable.inhibit = false;
     },
     
     onTextFocused: function() {
@@ -912,17 +908,6 @@ CheckList.prototype = {
         if ( actor.text.length == 0 && this.items.length > 1 ) this.removeItem(actor._delegate);
         actor.disconnect(actor.focusId);
         actor.focusId = null;
-    },
-    
-    updateDnD: function() {
-        for ( let item of this.items ) {
-            if ( item.text.has_pointer ) {
-                this.draggable.inhibit = true;
-                return;
-            }
-        }
-        
-        this.draggable.inhibit = false;
     },
     
     updateScrollPosition: function() {
