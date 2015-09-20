@@ -280,6 +280,7 @@ NoteBase.prototype = {
             Clutter.ungrab_pointer();
             this.actor.disconnect(this.eventId);
             this.eventId = null;
+            if ( !this.actor.has_pointer ) global.unset_cursor();
         }
     },
     
@@ -321,7 +322,7 @@ NoteBase.prototype = {
     canSelect: function(x, y) { return false },
     
     _onLeave: function() {
-        global.unset_cursor();
+        if ( !this.isResizing ) global.unset_cursor();
     },
     
     toggleMenu: function() {
