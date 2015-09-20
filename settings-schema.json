@@ -22,18 +22,18 @@
     "height": {
         "type": "scale",
         "description": "Default height",
-        "min": 100,
+        "min": 75,
         "max": 500,
-        "step": 10,
+        "step": 25,
         "default": 200
     },
     
     "width": {
         "type": "scale",
         "description": "Default width",
-        "min": 100,
+        "min": 125,
         "max": 500,
-        "step": 10,
+        "step": 25,
         "default": 200
     },
     

@@ -26,8 +26,8 @@ const STICKY_DRAG_INTERVAL = 25;
 const DESTROY_TIME = 0.5;
 const PADDING = 10;
 const EDGE_WIDTH = 10;
-const MIN_HEIGHT = 50;
-const MIN_WIDTH = 50;
+const MIN_HEIGHT = 75;
+const MIN_WIDTH = 125;
 
 const THEMES = {
     "green": "Mint-X-Green",
