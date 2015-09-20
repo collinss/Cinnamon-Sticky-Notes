@@ -249,6 +249,7 @@ NoteBase.prototype = {
         if ( this.hasBottom || this.hasSide ) {
             this.isResizing = true;
             Clutter.grab_pointer(this.actor);
+            global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
             if ( !this.eventId )
                 this.eventId = this.actor.connect("event", Lang.bind(this, this.handleResizeEvent));
         }
@@ -277,6 +278,7 @@ NoteBase.prototype = {
         if ( event.type() == Clutter.EventType.BUTTON_RELEASE ) {
             this.isResizing = false;
             Clutter.ungrab_pointer();
+            global.set_stage_input_mode(Cinnamon.StageInputMode.NORMAL);
             this.actor.disconnect(this.eventId);
             this.eventId = null;
             if ( !this.actor.has_pointer ) global.unset_cursor();
