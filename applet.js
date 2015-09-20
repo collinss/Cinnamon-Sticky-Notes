@@ -279,6 +279,7 @@ NoteBase.prototype = {
             this.isResizing = false;
             Clutter.ungrab_pointer();
             this.actor.disconnect(this.eventId);
+            this.eventId = null;
         }
     },
     
