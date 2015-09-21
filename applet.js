@@ -272,6 +272,8 @@ NoteBase.prototype = {
                 newWdith = Math.round(x - actorX);
                 this.actor.width = (newWdith < MIN_WIDTH) ? MIN_WIDTH : newWdith;
             }
+            
+            return true;
         }
         
         // end resize on button release
@@ -282,6 +284,8 @@ NoteBase.prototype = {
             this.actor.disconnect(this.eventId);
             this.eventId = null;
             if ( !this.actor.has_pointer ) global.unset_cursor();
+            
+            return true;
         }
     },
     
