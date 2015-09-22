@@ -13,7 +13,7 @@
    height="16"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.4 r9939"
+   inkscape:version="0.91 r"
    sodipodi:docname="checkbox-checked.svg">
   <defs
      id="defs4">
@@ -30,13 +30,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="11.181126"
-     inkscape:cx="3.2486331"
-     inkscape:cy="6.6857668"
+     inkscape:cx="-9.9432404"
+     inkscape:cy="6.5068939"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1366"
-     inkscape:window-height="691"
+     inkscape:window-width="1440"
+     inkscape:window-height="823"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="1" />
@@ -48,7 +48,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -67,7 +67,7 @@
        ry="0.5"
        rx="0.5" />
     <path
-       style="fill:none;stroke:#2ab937;stroke-width:1.98646748;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:none;stroke:#000000;stroke-width:1.98646748;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 2.4921882,1045.4812 c 0.9592873,0.1799 1.8753096,0.5864 2.6522811,1.1771 0.7192696,0.5468 1.3187466,1.2504 1.7444681,2.0473 0.3320525,-1.7568 0.9787664,-3.4536 1.9002241,-4.9858 1.1684666,-1.9429 2.7802325,-3.6174 4.6771095,-4.8591"
        id="path3786"
        inkscape:path-effect="#path-effect3788"
