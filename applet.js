@@ -285,6 +285,8 @@ NoteBase.prototype = {
             this.eventId = null;
             if ( !this.actor.has_pointer ) global.unset_cursor();
             
+            this.triggerUpdate();
+            
             return true;
         }
     },
