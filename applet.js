@@ -289,6 +289,8 @@ NoteBase.prototype = {
             
             return true;
         }
+        
+        return false;
     },
     
     _onDragBegin: function() {
