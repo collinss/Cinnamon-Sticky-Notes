@@ -54,7 +54,7 @@ function focusText(actor) {
     }
     
     actor.grab_key_focus();
-    if ( settings.raisedState && settings.lowerOnClick ) {
+    if ( settings.raisedState ) {
         global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
     }
 }
@@ -107,7 +107,6 @@ SettingsManager.prototype = {
         this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
         this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
         this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
-        this.settings.bindProperty(Settings.BindingDirection.IN, "lowerOnClick", "lowerOnClick");
     },
     
     saveNotes:function(notes) {
@@ -1260,9 +1259,7 @@ NoteBox.prototype = {
         settings.raisedState = true;
         this.pinned = false;
         this.checkMouseTracking();
-        if ( settings.lowerOnClick ) {
-            this.setModal();
-        }
+        this.setModal();
         this.emit("state-changed");
     },
     
@@ -1294,7 +1291,7 @@ NoteBox.prototype = {
         this.actor.raise_top();
         this.checkMouseTracking();
         settings.raisedState = false;
-        settings.hideState = true;
+        settings.hideState = false;
         this.pinned = true;
         this.unsetModal();
         this.emit("state-changed");

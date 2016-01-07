@@ -71,11 +71,5 @@
             "Hide notes": 2,
             "Restore previous state": 3
         }
-    },
-    
-    "lowerOnClick": {
-        "type": "checkbox",
-        "description": "Lower notes on mouse click",
-        "default": true
     }
 }
