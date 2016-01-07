@@ -1258,7 +1258,7 @@ NoteBox.prototype = {
         }
         
         settings.raisedState = true;
-        this.isPinned = false;
+        this.pinned = false;
         this.checkMouseTracking();
         if ( settings.lowerOnClick ) {
             this.setModal();
@@ -1273,7 +1273,7 @@ NoteBox.prototype = {
             settings.hideState = false;
         }
         
-        this.isPinned = false;
+        this.pinned = false;
         settings.raisedState = false;
         this.checkMouseTracking();
         
@@ -1285,7 +1285,7 @@ NoteBox.prototype = {
         this.actor.hide();
         settings.raisedState = false;
         settings.hideState = true;
-        this.isPinned = false;
+        this.pinned = false;
         this.unsetModal();
         this.emit("state-changed");
     },
@@ -1295,14 +1295,9 @@ NoteBox.prototype = {
         this.checkMouseTracking();
         settings.raisedState = false;
         settings.hideState = true;
-        this.isPinned = true;
+        this.pinned = true;
         this.unsetModal();
         this.emit("state-changed");
-    },
-    
-    togglePin: function() {
-        if ( !this.isPinned ) this.pinNotes();
-        else this.raiseNotes();
     },
 
     setModal: function() {
@@ -1325,7 +1320,7 @@ NoteBox.prototype = {
     },
     
     handleStageEvent: function(actor, event) {
-        if ( this.isPinned ) return false;
+        if ( this.pinned ) return false;
 
         let target = event.get_source();
         
@@ -1527,6 +1522,7 @@ MyApplet.prototype = {
         this.notesMenuManager = new MenuManager(this);
         
         noteBox = new NoteBox();
+        noteBox.connect("state-changed", Lang.bind(this, this.stateChanged));
         
         this.menu = new Applet.AppletPopupMenu(this, this.orientation);
         this.notesMenuManager.addMenu(this.menu);
@@ -1537,6 +1533,7 @@ MyApplet.prototype = {
     
     on_applet_clicked: function() {
         this.menu.toggle();
+        if ( noteBox.pinned ) return;
         if ( this.menu.isOpen ) noteBox.raiseNotes();
         else noteBox.lowerNotes();
     },
@@ -1557,16 +1554,21 @@ MyApplet.prototype = {
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        let newPinMenuItem = new PopupMenu.PopupIconMenuItem("Keep notes on top", "pin-symbolic", St.IconType.SYMBOLIC);
-        this.menu.addMenuItem(newPinMenuItem);
-        newPinMenuItem.connect("activate", Lang.bind(noteBox, function() {
-            if ( !this.isPinned ) this.pinNotes();
-            else this.raiseNotes();
+        this.pinMenuItem = new PopupMenu.PopupIconMenuItem("Pin notes (keep on top)", "pin-symbolic", St.IconType.SYMBOLIC);
+        this.menu.addMenuItem(this.pinMenuItem);
+        this.pinMenuItem.connect("activate", Lang.bind(this, function() {
+            if ( noteBox.pinned ) noteBox.raiseNotes();
+            else noteBox.pinNotes();
         }));
 
-        let newHideMenuItem = new PopupMenu.PopupIconMenuItem("Hide notes", "hide-symbolic", St.IconType.SYMBOLIC);
-        this.menu.addMenuItem(newHideMenuItem);
-        newHideMenuItem.connect("activate", Lang.bind(noteBox, noteBox.hideNotes));
+        let hideMenuItem = new PopupMenu.PopupIconMenuItem("Hide notes", "hide-symbolic", St.IconType.SYMBOLIC);
+        this.menu.addMenuItem(hideMenuItem);
+        hideMenuItem.connect("activate", Lang.bind(noteBox, noteBox.hideNotes));
+    },
+    
+    stateChanged: function() {
+        if ( noteBox.pinned ) this.pinMenuItem.label.text = "Unpin notes (lower on click)";
+        else this.pinMenuItem.label.text = "Pin notes (keep on top)";
     }
 }
 
