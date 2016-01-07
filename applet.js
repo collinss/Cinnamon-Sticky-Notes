@@ -1429,7 +1429,7 @@ NoteBox.prototype = {
     checkMouseTracking: function() {
         let window = global.screen.get_mouse_window(null);
         let hasMouseWindow = window && window.window_type != Meta.WindowType.DESKTOP;
-        let enable = !hasMouseWindow || settings.raisedState;
+        let enable = !hasMouseWindow || settings.raisedState || this.pinned;
         if ( this.mouseTrackEnabled != enable ) {
             this.mouseTrackEnabled = enable;
             if ( enable ) {
