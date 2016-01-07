@@ -1554,6 +1554,8 @@ MyApplet.prototype = {
         let newCheckListMenuItem = new PopupMenu.PopupIconMenuItem("New check-list", "add-checklist-symbolic", St.IconType.SYMBOLIC);
         this.menu.addMenuItem(newCheckListMenuItem);
         newCheckListMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newCheckList));
+        
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         let newPinMenuItem = new PopupMenu.PopupIconMenuItem("Keep notes on top", "pin-symbolic", St.IconType.SYMBOLIC);
         this.menu.addMenuItem(newPinMenuItem);
