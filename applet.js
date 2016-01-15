@@ -16,6 +16,7 @@ const Settings = imports.ui.settings;
 const Tooltips = imports.ui.tooltips;
 const Tweener = imports.ui.tweener;
 
+const FileDialog = imports.misc.fileDialog;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const Signals = imports.signals;
@@ -1525,7 +1526,7 @@ MyApplet.prototype = {
         this.notesMenuManager.addMenu(this.menu);
         componentManager.addActor(this.menu.actor);
         
-        this.buildMenu();
+        this.buildMenus();
     },
     
     on_applet_clicked: function() {
@@ -1540,7 +1541,8 @@ MyApplet.prototype = {
         noteBox.destroy();
     },
     
-    buildMenu: function() {
+    buildMenus: function() {
+        // main menu
         let newNoteMenuItem = new PopupMenu.PopupIconMenuItem("New note", "add-note-symbolic", St.IconType.SYMBOLIC);
         this.menu.addMenuItem(newNoteMenuItem);
         newNoteMenuItem.connect("activate", Lang.bind(noteBox, noteBox.newNote));
@@ -1561,11 +1563,40 @@ MyApplet.prototype = {
         let hideMenuItem = new PopupMenu.PopupIconMenuItem("Hide notes", "hide-symbolic", St.IconType.SYMBOLIC);
         this.menu.addMenuItem(hideMenuItem);
         hideMenuItem.connect("activate", Lang.bind(noteBox, noteBox.hideNotes));
+        
+        // context menu
+        let backupItem = new PopupMenu.PopupMenuItem("Back up notes");
+        this._applet_context_menu.addMenuItem(backupItem);
+        backupItem.connect("activate", Lang.bind(this, this.backupNotes));
+        
+        let restoreBackupItem = new PopupMenu.PopupMenuItem("Restore from backup");
+        this._applet_context_menu.addMenuItem(restoreBackupItem);
+        restoreBackupItem.connect("activate", Lang.bind(this, this.loadBackup));
     },
     
     stateChanged: function() {
         if ( noteBox.pinned ) this.pinMenuItem.label.text = "Unpin notes (lower on click)";
         else this.pinMenuItem.label.text = "Pin notes (keep on top)";
+    },
+    
+    backupNotes: function() {
+        params = { directory: "~/", name: "notes-" + new Date().toJSON() + " .json" };
+        FileDialog.save(Lang.bind(this, function(path) {
+            let file = Gio.file_new_for_path(path.slice(0,-1));
+            if ( !file.query_exists(null) ) file.create(Gio.FileCreateFlags.NONE, null);
+            file.replace_contents(JSON.stringify(settings.storedNotes), null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+        }), params);
+    },
+    
+    loadBackup: function() {
+        params = { directory: "~/" };
+        FileDialog.open(Lang.bind(this, function(path) {
+            let file = Gio.file_new_for_path(path.slice(0,-1));
+            if ( !file.query_exists(null) ) return;
+            let [a, contents, b] = file.load_contents(null);
+            settings.saveNotes(JSON.parse(contents));
+            noteBox.initializeNotes();
+        }), params);
     }
 }
 
