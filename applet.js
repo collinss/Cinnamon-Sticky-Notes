@@ -1590,13 +1590,15 @@ MyApplet.prototype = {
     
     loadBackup: function() {
         params = { directory: "~/" };
-        FileDialog.open(Lang.bind(this, function(path) {
-            let file = Gio.file_new_for_path(path.slice(0,-1));
-            if ( !file.query_exists(null) ) return;
-            let [a, contents, b] = file.load_contents(null);
-            settings.saveNotes(JSON.parse(contents));
-            noteBox.initializeNotes();
-        }), params);
+        new ModalDialog.ConfirmDialog("This will permenantly remove all existing notes. Are you sure you want to continue?", Lang.bind(this, function() {
+            FileDialog.open(Lang.bind(this, function(path) {
+                let file = Gio.file_new_for_path(path.slice(0,-1));
+                if ( !file.query_exists(null) ) return;
+                let [a, contents, b] = file.load_contents(null);
+                settings.saveNotes(JSON.parse(contents));
+                noteBox.initializeNotes();
+            }), params);
+        })).open();
     }
 }
 
