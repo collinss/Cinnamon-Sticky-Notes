@@ -358,6 +358,7 @@ NoteBase.prototype = {
     },
     
     destroy: function(){
+        this.onNoteRemoved();
         componentManager.removeActor(this.actor);
         componentManager.removeActor(this.menu.actor);
         Tweener.addTween(this.actor, {
@@ -365,7 +366,6 @@ NoteBase.prototype = {
             transition: "linear",
             time: DESTROY_TIME,
             onComplete: Lang.bind(this, function() {
-                this.unfocusText();
                 this.actor.destroy();
             })
         });
@@ -374,6 +374,9 @@ NoteBase.prototype = {
         this.menu = null;
         this.menuManager = null;
     },
+    
+    // implemented by individual note types
+    onNoteRemoved: function() { },
     
     trackMouse: function() {
         if( !Main.layoutManager.isTrackingChrome(this.actor) ) {
@@ -519,6 +522,10 @@ Note.prototype = {
         let width = sNode.adjust_for_width(this.actor.width);
         alloc.min_size = width - sbWidth;
         alloc.natural_size = width - sbWidth;
+    },
+    
+    onNoteRemoved: function() {
+        this.unfocusText();
     },
     
     onButtonRelease: function(actor, event) {
