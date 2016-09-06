@@ -165,7 +165,7 @@ NoteBase.prototype = {
         let height = ( info && info.height ) ? info.height : settings.height;
         let width = ( info && info.width ) ? info.width : settings.width;
         
-        this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: height, width: width });
+        this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, name: "NoteBox", style_class: this.theme, height: height, width: width });
         this.actor._delegate = this;
         
         this.titleBox = new St.BoxLayout({ style_class: "sticky-titleBox" });
@@ -241,7 +241,7 @@ NoteBase.prototype = {
     
     setTheme: function(a, b, c, codeName) {
         this.theme = codeName;
-        this.actor.style_class = codeName + "-noteBox";
+        this.actor.style_class = codeName;
         this.emit("changed");
     },
     
