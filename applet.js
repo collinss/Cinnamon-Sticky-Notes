@@ -30,16 +30,16 @@ const MIN_HEIGHT = 75;
 const MIN_WIDTH = 125;
 
 const THEMES = {
-    "green": "Mint-X-Green",
-    "aqua": "Mint-X-Aqua",
-    "blue": "Mint-X-Blue",
-    "brown": "Mint-X-Brown",
-    "orange": "Mint-X-Orange",
-    "pink": "Mint-X-Pink",
-    "purple": "Mint-X-Purple",
-    "red": "Mint-X-Red",
-    "sand": "Mint-X-Sand",
-    "teal": "Mint-X-Teal"
+    "green":    "Green",
+    "aqua":     "Aqua",
+    "blue":     "Blue",
+    "brown":    "Brown",
+    "orange":   "Orange",
+    "pink":     "Pink",
+    "purple":   "Purple",
+    "red":      "Red",
+    "sand":     "Sand",
+    "teal":     "Teal"
 }
 
 

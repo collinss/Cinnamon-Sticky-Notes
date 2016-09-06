@@ -25,7 +25,6 @@
     text-decoration: line-through;
 }
 
-
 #NoteBox {
     font: 12px arial, sans-serif;
     padding: 10px;
@@ -56,7 +55,7 @@
 }
 
 
-/*Mint-X theme*/
+/*Green*/
 #NoteBox.green {
     background-color: #99c16f;
     color: #000000;
@@ -82,7 +81,7 @@
 }
 
 
-/*Mint-X-Aqua*/
+/*Aqua*/
 #NoteBox.aqua {
     background-color: #6cabcd;
     color: #000000;
@@ -108,7 +107,7 @@
 }
 
 
-/*Mint-X-Blue*/
+/*Blue*/
 #NoteBox.blue {
     background-color: #546dc1;
     color: #000000;
@@ -134,7 +133,7 @@
 }
 
 
-/*Mint-X-Brown*/
+/*Brown*/
 #NoteBox.brown {
     background-color: #a68263;
     color: #000000;
@@ -160,7 +159,7 @@
 }
 
 
-/*Mint-X-Orange*/
+/*Orange*/
 #NoteBox.orange {
     background-color: #d99859;
     color: #000000;
@@ -186,7 +185,7 @@
 }
 
 
-/*Mint-X-Pink*/
+/*Pink*/
 #NoteBox.pink {
     background-color: #c35591;
     color: #000000;
@@ -212,7 +211,7 @@
 }
 
 
-/*Mint-X-Purple*/
+/*Purple*/
 #NoteBox.purple {
     background-color: #8464c5;
     color: #000000;
@@ -238,7 +237,7 @@
 }
 
 
-/*Mint-X-Red*/
+/*Red*/
 #NoteBox.red {
     background-color: #bc4e4b;
     color: #000000;
@@ -264,7 +263,7 @@
 }
 
 
-/*Mint-X-Sand*/
+/*Sand*/
 #NoteBox.sand {
     background-color: #c4a65e;
     color: #000000;
@@ -290,7 +289,7 @@
 }
 
 
-/*Mint-X-Teal*/
+/*Teal*/
 #NoteBox.teal {
     background-color: #5aaa9a;
     color: #000000;
