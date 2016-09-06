@@ -371,6 +371,8 @@ NoteBase.prototype = {
             transition: "linear",
             time: DESTROY_TIME,
             onComplete: Lang.bind(this, function() {
+                let parent = this.actor.get_parent();
+                this.parent.remove_child(this.actor);
                 this.actor.destroy();
             })
         });
