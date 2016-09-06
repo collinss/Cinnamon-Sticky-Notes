@@ -43,7 +43,7 @@ const THEMES = {
 }
 
 
-let applet, noteBox, componentManager;
+let applet, noteBox;
 
 
 function focusText(actor) {
@@ -57,38 +57,6 @@ function focusText(actor) {
     actor.grab_key_focus();
     if ( settings.raisedState ) {
         global.set_stage_input_mode(Cinnamon.StageInputMode.FULLSCREEN);
-    }
-}
-
-
-function ComponentManager() {
-    this._init();
-}
-
-ComponentManager.prototype = {
-    _init: function() {
-        this.actors = [];
-    },
-    
-    addActor: function(actor) {
-        this.actors.push(actor);
-    },
-    
-    removeActor: function(actor) {
-        for ( let i = 0; i < this.actors.length; i++ ) {
-            if ( this.actors[i] == actor ) {
-                this.actors.splice(i, 1);
-                return;
-            }
-        }
-    },
-    
-    hasActor: function(actor) {
-        for ( let i = 0; i < this.actors.length; i++ ) {
-            if ( this.actors[i] == actor || this.actors[i].contains(actor) ) return true;
-        }
-        
-        return false;
     }
 }
 
@@ -117,24 +85,59 @@ SettingsManager.prototype = {
 Signals.addSignalMethods(SettingsManager.prototype);
 
 
-function MenuManager(owner) {
-    this._init(owner);
+function Menu(applet, orientation) {
+    this._init(applet, orientation);
 }
 
-MenuManager.prototype = {
-    __proto__: PopupMenu.PopupMenuManager.prototype,
+Menu.prototype = {
+    __proto__: PopupMenu.PopupMenu.prototype,
     
-    _init: function(owner) {
-        PopupMenu.PopupMenuManager.prototype._init.call(this, owner);
+    _init: function(applet, orientation) {
+        PopupMenu.PopupMenu.prototype._init.call(this, applet.actor, 0.0, orientation, 0);
+        this.actor.hide();
+        this.applet = applet;
+        applet.connect("orientation-changed", Lang.bind(this, this._onOrientationChanged));
     },
     
-    _shouldBlockEvent: function(event) {
-        //this function was overridden due to it causing problems when the menu didn't have the focus
-        return false;
+    _connectItemSignals: function(menuItem) {
+        menuItem._activeChangeId = menuItem.connect('active-changed', Lang.bind(this, function (menuItem, active) {
+            if (active && this._activeMenuItem != menuItem) {
+                if (this._activeMenuItem)
+                    this._activeMenuItem.setActive(false);
+                this._activeMenuItem = menuItem;
+                this.emit('active-changed', menuItem);
+            } else if (!active && this._activeMenuItem == menuItem) {
+                this._activeMenuItem = null;
+                this.emit('active-changed', null);
+            }
+        }));
+        menuItem._sensitiveChangeId = menuItem.connect('sensitive-changed', Lang.bind(this, function(menuItem, sensitive) {
+            if (!sensitive && this._activeMenuItem == menuItem) {
+                if (!this.actor.navigate_focus(menuItem.actor,
+                                               Gtk.DirectionType.TAB_FORWARD,
+                                               true))
+                    this.actor.grab_key_focus();
+            } else if (sensitive && this._activeMenuItem == null) {
+                if (global.stage.get_key_focus() == this.actor)
+                    menuItem.actor.grab_key_focus();
+            }
+        }));
+        menuItem.connect('destroy', Lang.bind(this, function(emitter) {
+            menuItem.disconnect(menuItem._activeChangeId);
+            menuItem.disconnect(menuItem._sensitiveChangeId);
+            if (menuItem.menu) {
+                menuItem.menu.disconnect(menuItem._subMenuActivateId);
+                menuItem.menu.disconnect(menuItem._subMenuActiveChangeId);
+                this.disconnect(menuItem._closingId);
+            }
+            if (menuItem == this._activeMenuItem)
+                this._activeMenuItem = null;
+            this.length--;
+        }));
     },
 
-    _activeMenuContains: function(actor) {
-        return componentManager.hasActor(actor);
+    _onOrientationChanged: function(a, orientation) {
+        this.setArrowSide(orientation);
     }
 }
 
@@ -164,7 +167,6 @@ NoteBase.prototype = {
         
         this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, style_class: this.theme + "-noteBox", height: height, width: width });
         this.actor._delegate = this;
-        componentManager.addActor(this.actor);
         
         this.titleBox = new St.BoxLayout({ style_class: "sticky-titleBox" });
         this.actor.add_actor(this.titleBox);
@@ -186,7 +188,6 @@ NoteBase.prototype = {
         this.menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.LEFT, 0);
         this.menuManager.addMenu(this.menu);
         Main.uiGroup.add_actor(this.menu.actor);
-        componentManager.addActor(this.menu.actor);
         this.menu.actor.hide();
         
         this.buildMenu();
@@ -359,8 +360,6 @@ NoteBase.prototype = {
     
     destroy: function(){
         this.onNoteRemoved();
-        componentManager.removeActor(this.actor);
-        componentManager.removeActor(this.menu.actor);
         Tweener.addTween(this.actor, {
             opacity: 0,
             transition: "linear",
@@ -1126,12 +1125,13 @@ CheckListItem.prototype = {
 }
 
 
-function NoteBox() {
-    this._init();
+function NoteBox(menu) {
+    this._init(menu);
 }
 
 NoteBox.prototype = {
-    _init: function() {
+    _init: function(menu) {
+        this.menu = menu;
         this.notes = [];
         this.last_x = -1;
         this.last_y = -1;
@@ -1142,7 +1142,10 @@ NoteBox.prototype = {
         this.actor = new Clutter.Group();
         Main.uiGroup.add_actor(this.actor);
         this.actor._delegate = this;
-        componentManager.addActor(this.actor);
+        
+        this.actor.add_actor(menu.actor);
+        this.menuManager = new PopupMenu.PopupMenuManager(this);
+        
         if ( settings.startState == 2 || ( settings.startState == 3 && settings.hideState ) ) {
             this.hideNotes();
             this.actor.hide();
@@ -1156,8 +1159,6 @@ NoteBox.prototype = {
         
         this.dragPlaceholder = new St.Bin({ style_class: "desklet-drag-placeholder" });
         this.dragPlaceholder.hide();
-        
-        this.enableMouseTracking(true);
         
         this.initializeNotes();
     },
@@ -1257,7 +1258,24 @@ NoteBox.prototype = {
         }
     },
     
+    hasActor: function(actor) {
+        // listen to contents of the box
+        if ( this.actor.contains(actor) ) return true;
+        
+        // we want to listen to the applet events still for raising and lowering purposes
+        if ( applet.actor == actor || applet.actor.contains(actor) ) return true;
+        
+        // the notes have thier own menus and we need to treat them the same
+        for ( let note of this.notes ) {
+            if ( actor == note.menu.actor || note.menu.actor.contains(actor) ) return true;
+        }
+        
+        return false;
+    },
+    
     raiseNotes: function() {
+        this.unpinNotes();
+        this.menu.open();
         this.actor.raise_top();
         if ( settings.hideState ) {
             this.actor.show();
@@ -1265,44 +1283,58 @@ NoteBox.prototype = {
         }
         
         settings.raisedState = true;
-        this.pinned = false;
-        this.checkMouseTracking();
+        this.enableMouseTracking(false);
         this.setModal();
-        this.emit("state-changed");
     },
     
     lowerNotes: function() {
+        this.unpinNotes();
+        this.menu.close();
         this.actor.lower(global.window_group);
         if ( settings.hideState ) {
             this.actor.show();
             settings.hideState = false;
         }
         
-        this.pinned = false;
         settings.raisedState = false;
-        this.checkMouseTracking();
-        
         this.unsetModal();
-        this.emit("state-changed");
+        this.enableMouseTracking(true);
     },
     
     hideNotes: function() {
+        this.unpinNotes();
+        this.menu.close();
         this.actor.hide();
         settings.raisedState = false;
         settings.hideState = true;
-        this.pinned = false;
         this.unsetModal();
-        this.emit("state-changed");
+        this.enableMouseTracking(false);
     },
     
     pinNotes: function() {
-        this.actor.raise_top();
-        this.checkMouseTracking();
-        settings.raisedState = false;
-        settings.hideState = false;
-        this.pinned = true;
+        if ( this.pinned ) return;
+        
+        if ( this.menu.isOpen ) this.menu.close();
+        
+        // since we're pinning the notes, the the main actor is no longer modal so we'll manage the menu
+        // with it's own menu manager
+        this.menuManager.addMenu(this.menu);
+        
         this.unsetModal();
-        this.emit("state-changed");
+        this.enableMouseTracking(true);
+        this.pinned = true;
+        this.emit("pin-changed");
+    },
+    
+    unpinNotes: function() {
+        if ( !this.pinned ) return;
+
+        // if we've pinned the notes, the menu is managed by it's own manager so we need to remove it now
+        this.menu.close()
+        this.menuManager.removeMenu(this.menu);
+        
+        this.pinned = false;
+        this.emit("pin-changed");
     },
 
     setModal: function() {
@@ -1329,7 +1361,7 @@ NoteBox.prototype = {
 
         let target = event.get_source();
         
-        if ( componentManager.hasActor(target) ) return false;
+        if ( this.hasActor(target) ) return false;
         
         let type = event.type();
         if ( type == Clutter.EventType.BUTTON_PRESS ) return true;
@@ -1432,18 +1464,17 @@ NoteBox.prototype = {
     },
     
     checkMouseTracking: function() {
-        let window = global.screen.get_mouse_window(null);
-        let hasMouseWindow = window && window.window_type != Meta.WindowType.DESKTOP;
-        let enable = !hasMouseWindow || settings.raisedState || this.pinned;
-        if ( this.mouseTrackEnabled != enable ) {
-            this.mouseTrackEnabled = enable;
-            if ( enable ) {
-                for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].trackMouse();
-            }
-            else {
-                for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].untrackMouse();
-            }
+        let enable = false;
+        if ( this.pinned ) enable = true;
+        else if ( !this.hideState && !this.raisedState ) {
+            let window = global.screen.get_mouse_window(null);
+            let hasMouseWindow = window && window.window_type != Meta.WindowType.DESKTOP;
+            enable = !hasMouseWindow;
         }
+        
+        if ( enable ) for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].trackMouse();
+        else for ( let i = 0; i < this.notes.length; i++ ) this.notes[i].untrackMouse();
+        
         return true;
     },
     
@@ -1452,10 +1483,13 @@ NoteBox.prototype = {
             this.mouseTrackTimoutId = Mainloop.timeout_add(500, Lang.bind(this, this.checkMouseTracking));
         else if ( !enable && this.mouseTrackTimoutId ) {
             Mainloop.source_remove(this.mouseTrackTimoutId);
+            this.mouseTrackTimoutId = null;
             for ( let i = 0; i < this.notes.length; i++ ) {
                 this.notes[i].untrackMouse();
             }
         }
+        
+        this.checkMouseTracking();
     },
     
     getAvailableCoordinates: function() {
@@ -1519,28 +1553,20 @@ MyApplet.prototype = {
         
         Applet.IconApplet.prototype._init.call(this, this.orientation, panelHeight, instanceId);
         
-        componentManager = new ComponentManager();
-        componentManager.addActor(this.actor);
-        
         this.set_applet_icon_symbolic_path(this.metadata.path+"/icons/sticky-symbolic.svg");
         
-        this.notesMenuManager = new MenuManager(this);
+        this.menu = new Menu(this, this.orientation);
         
-        noteBox = new NoteBox();
-        noteBox.connect("state-changed", Lang.bind(this, this.stateChanged));
-        
-        this.menu = new Applet.AppletPopupMenu(this, this.orientation);
-        this.notesMenuManager.addMenu(this.menu);
-        componentManager.addActor(this.menu.actor);
+        noteBox = new NoteBox(this.menu);
+        noteBox.connect("pin-changed", Lang.bind(this, this.stateChanged));
         
         this.buildMenus();
     },
     
     on_applet_clicked: function() {
-        this.menu.toggle();
-        if ( noteBox.pinned ) return;
-        if ( this.menu.isOpen ) noteBox.raiseNotes();
-        else noteBox.lowerNotes();
+        if ( noteBox.pinned ) this.menu.toggle();
+        else if ( settings.raisedState ) noteBox.lowerNotes();
+        else noteBox.raiseNotes();
     },
     
     on_applet_removed_from_panel: function() {
