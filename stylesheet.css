@@ -29,7 +29,10 @@
     font: 12px arial, sans-serif;
     padding: 10px;
     caret-size: 1px;
-    /*box-shadow: 1px 1px 1px;*/
+}
+
+#NoteBox:boxshadow {
+    box-shadow: 2px 2px 7px;
 }
 
 #NoteBox StScrollBar {

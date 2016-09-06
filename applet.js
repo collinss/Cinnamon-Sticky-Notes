@@ -73,9 +73,10 @@ SettingsManager.prototype = {
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "raisedState", "raisedState");
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "hideState", "hideState");
         this.settings.bindProperty(Settings.BindingDirection.IN, "theme", "theme");
-        this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height", function() { this.emit("height-changed"); });
-        this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width", function() { this.emit("width-changed"); });
+        this.settings.bindProperty(Settings.BindingDirection.IN, "height", "height");
+        this.settings.bindProperty(Settings.BindingDirection.IN, "width", "width");
         this.settings.bindProperty(Settings.BindingDirection.IN, "startState", "startState");
+        this.settings.bindProperty(Settings.BindingDirection.IN, "boxShadow", "boxShadow", function() { this.emit("box-shadow-changed"); });
     },
     
     saveNotes:function(notes) {
@@ -167,6 +168,11 @@ NoteBase.prototype = {
         
         this.actor = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true, name: "NoteBox", style_class: this.theme, height: height, width: width });
         this.actor._delegate = this;
+        if ( settings.boxShadow ) this.actor.add_style_pseudo_class("boxshadow");
+        settings.connect("box-shadow-changed", Lang.bind(this, function() {
+            if ( settings.boxShadow ) this.actor.add_style_pseudo_class("boxshadow");
+            else this.actor.remove_style_pseudo_class("boxshadow");
+        }));
         
         this.titleBox = new St.BoxLayout({ style_class: "sticky-titleBox" });
         this.actor.add_actor(this.titleBox);
