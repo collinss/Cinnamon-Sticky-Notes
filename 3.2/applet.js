@@ -36,7 +36,6 @@ let applet, noteBox;
 function focusText(actor) {
     let currentMode = global.stage_input_mode;
     if ( currentMode == Cinnamon.StageInputMode.FOCUSED && actor.has_key_focus() ) return;
-    // if ( !this.previousMode ) this.previousMode = currentMode;
     if ( currentMode != Cinnamon.StageInputMode.FOCUSED ) {
         global.set_stage_input_mode(Cinnamon.StageInputMode.FOCUSED);
     }
