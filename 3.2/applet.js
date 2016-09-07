@@ -29,19 +29,6 @@ const EDGE_WIDTH = 10;
 const MIN_HEIGHT = 75;
 const MIN_WIDTH = 125;
 
-const THEMES = {
-    "green":    "Green",
-    "aqua":     "Aqua",
-    "blue":     "Blue",
-    "brown":    "Brown",
-    "orange":   "Orange",
-    "pink":     "Pink",
-    "purple":   "Purple",
-    "red":      "Red",
-    "sand":     "Sand",
-    "teal":     "Teal"
-}
-
 
 let applet, noteBox;
 
@@ -157,8 +144,10 @@ NoteBase.prototype = {
         if ( info && info.theme ) this.theme = info.theme;
         else {
             if ( settings.theme == "random" ) {
-                let keys = Object.keys(THEMES);
-                this.theme = keys[Math.floor(Math.random()*keys.length)];
+                let options = settings.settings.getOptions("theme")
+                let keys = Object.keys(options);
+                key = keys[Math.floor(Math.random()*(keys.length-1))];
+                this.theme = options[key];
             }
             else this.theme = settings.theme;
         }
@@ -206,10 +195,11 @@ NoteBase.prototype = {
         let themeSection = new PopupMenu.PopupSubMenuMenuItem(_("Change theme"));
         this.contentMenuSection.addMenuItem(themeSection);
         
-        for ( let codeName in THEMES ) {
-            let themeItem = new PopupMenu.PopupMenuItem(THEMES[codeName]);
+        let options = settings.settings.getOptions("theme");
+        for ( let name in options ) {
+            let themeItem = new PopupMenu.PopupMenuItem(name);
             themeSection.menu.addMenuItem(themeItem);
-            themeItem.connect("activate", Lang.bind(this, this.setTheme, codeName));
+            themeItem.connect("activate", Lang.bind(this, this.setTheme, options[name]));
         }
         
         this.titleMenuItem = new PopupMenu.PopupMenuItem(this.title ? "Edit title" : "Add title");
